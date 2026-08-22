@@ -1,0 +1,2742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kinfolk — Family Tree Builder</title>
+<meta name="description" content="A private, offline-first family tree builder. Build, explore, and export your genealogy — all data stays in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f2ee; --bg-2:#eae7e0; --panel:#ffffff; --panel-2:#faf9f7;
+  --ink:#1d2321; --ink-2:#4d5754; --ink-3:#818b88;
+  --line:#dcd8d0; --line-2:#e8e5df;
+  --accent:#2f6f5e; --accent-2:#3d8a75; --accent-soft:rgba(47,111,94,.10);
+  --bronze:#a8763e; --bronze-soft:rgba(168,118,62,.12);
+  --male:#4a7ba8; --female:#b06a86; --neutral:#8a8f96;
+  --danger:#b3453c; --danger-soft:rgba(179,69,60,.10);
+  --warn:#b8862b; --ok:#2f7d55;
+  --shadow:0 1px 2px rgba(20,25,24,.06), 0 6px 20px rgba(20,25,24,.07);
+  --shadow-lg:0 8px 40px rgba(20,25,24,.16);
+  --radius:12px; --radius-sm:8px;
+  --rail:264px; --detail:376px; --top:56px;
+}
+html[data-theme="dark"]{
+  --bg:#14181a; --bg-2:#0f1214; --panel:#1c2124; --panel-2:#232a2d;
+  --ink:#e8ece9; --ink-2:#a8b2ae; --ink-3:#78827f;
+  --line:#2e3639; --line-2:#262d30;
+  --accent:#4fa88f; --accent-2:#63c0a6; --accent-soft:rgba(79,168,143,.14);
+  --bronze:#c99a5e; --bronze-soft:rgba(201,154,94,.14);
+  --male:#6d9ecb; --female:#cf8ba6; --neutral:#98a0a6;
+  --danger:#e07a70; --danger-soft:rgba(224,122,112,.14);
+  --warn:#d8a545; --ok:#5cbb87;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  --shadow-lg:0 8px 40px rgba(0,0,0,.5);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3);background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+.serif{font-family:'Fraunces','Iowan Old Style',Georgia,serif}
+
+/* ─────────── App shell ─────────── */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.topbar{
+  height:var(--top);flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);z-index:40;
+}
+.brand{display:flex;align-items:center;gap:9px;padding-right:10px;margin-right:2px;flex:0 0 auto}
+.brand-mark{width:28px;height:28px;flex:0 0 auto}
+.brand-name{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;letter-spacing:-.01em}
+.tree-name{
+  font-weight:600;font-size:14px;padding:5px 9px;border-radius:var(--radius-sm);
+  border:1px solid transparent;background:transparent;min-width:80px;max-width:230px;
+}
+.tree-name:hover{border-color:var(--line);background:var(--panel-2)}
+.tree-name:focus{outline:none;border-color:var(--accent);background:var(--panel-2)}
+.spacer{flex:1 1 auto}
+.tbtn{
+  display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;
+  border-radius:var(--radius-sm);color:var(--ink-2);font-size:13px;font-weight:500;
+  border:1px solid transparent;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;
+}
+.tbtn:hover{background:var(--bg-2);color:var(--ink)}
+.tbtn[disabled]{opacity:.35;pointer-events:none}
+.tbtn.primary{background:var(--accent);color:#fff;font-weight:600}
+.tbtn.primary:hover{background:var(--accent-2);color:#fff}
+.tbtn.icon{padding:0;width:32px;justify-content:center}
+.tbtn svg{width:16px;height:16px;flex:0 0 auto}
+.tsep{width:1px;height:22px;background:var(--line);margin:0 3px;flex:0 0 auto}
+.body{flex:1 1 auto;display:flex;min-height:0;position:relative}
+
+/* ─────────── Left rail ─────────── */
+.rail{
+  width:var(--rail);flex:0 0 auto;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0;z-index:20;
+}
+.rail-tabs{display:flex;padding:8px 8px 0;gap:2px;border-bottom:1px solid var(--line)}
+.rail-tab{
+  flex:1;padding:7px 4px 9px;font-size:12px;font-weight:600;color:var(--ink-3);
+  border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:6px 6px 0 0;
+}
+.rail-tab:hover{color:var(--ink-2);background:var(--panel-2)}
+.rail-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.rail-body{flex:1 1 auto;overflow-y:auto;min-height:0}
+.rail-pane{display:none;padding:10px}
+.rail-pane.on{display:block}
+.searchwrap{position:relative;margin-bottom:8px}
+.searchwrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink-3);pointer-events:none}
+.field{
+  width:100%;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:var(--radius-sm);
+  background:var(--panel-2);font-size:13px;transition:border-color .12s,box-shadow .12s;
+}
+.field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--panel)}
+.field.with-icon{padding-left:30px}
+textarea.field{height:auto;min-height:66px;padding:8px 10px;resize:vertical;line-height:1.5}
+select.field{cursor:pointer;appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:28px}
+.rowfilter{display:flex;gap:6px;margin-bottom:8px}
+.rowfilter .field{height:30px;font-size:12px}
+.plist{display:flex;flex-direction:column;gap:1px}
+.pitem{
+  display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:var(--radius-sm);
+  text-align:left;width:100%;transition:background .1s;
+}
+.pitem:hover{background:var(--bg-2)}
+.pitem.on{background:var(--accent-soft)}
+.pitem.on .pitem-name{color:var(--accent)}
+.avatar{
+  width:30px;height:30px;border-radius:50%;flex:0 0 auto;object-fit:cover;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;
+  color:#fff;background:var(--neutral);letter-spacing:.02em;overflow:hidden;
+}
+.avatar.m{background:var(--male)} .avatar.f{background:var(--female)}
+.avatar.lg{width:56px;height:56px;font-size:19px}
+.pitem-txt{min-width:0;flex:1}
+.pitem-txt{display:block}
+.pitem-name{display:block;font-size:13px;font-weight:550;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pitem-sub{display:block;font-size:11.5px;line-height:1.35;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{padding:26px 14px;text-align:center;color:var(--ink-3);font-size:12.5px;line-height:1.6}
+.empty strong{display:block;color:var(--ink-2);font-size:13px;margin-bottom:3px}
+
+/* ─────────── Canvas ─────────── */
+.stage{flex:1 1 auto;position:relative;min-width:0;background:var(--bg);overflow:hidden}
+.stage::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0);
+  background-size:22px 22px;
+}
+#chart{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none;user-select:none}
+#chart.dragging{cursor:grabbing}
+.chartbar{
+  position:absolute;top:10px;left:10px;right:10px;display:flex;gap:6px;align-items:center;
+  z-index:10;pointer-events:none;flex-wrap:wrap;
+}
+.chartbar>*{pointer-events:auto}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:2px;box-shadow:var(--shadow)}
+.seg button{padding:5px 11px;font-size:12.5px;font-weight:550;border-radius:6px;color:var(--ink-2)}
+.seg button:hover{color:var(--ink);background:var(--bg-2)}
+.seg button.on{background:var(--accent);color:#fff}
+.pill{
+  display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius-sm);padding:4px 10px;font-size:12.5px;box-shadow:var(--shadow);color:var(--ink-2);
+}
+.pill label{font-weight:550;color:var(--ink-3);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+.pill input[type=range]{width:74px;accent-color:var(--accent)}
+.pill input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px}
+.zoomer{position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;gap:5px;z-index:10}
+.zbtn{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);
+  color:var(--ink-2);box-shadow:var(--shadow);
+}
+.zbtn:hover{color:var(--accent);border-color:var(--accent)}
+.zbtn svg{width:15px;height:15px}
+.legend{
+  position:absolute;bottom:16px;left:16px;z-index:10;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius-sm);padding:8px 11px;box-shadow:var(--shadow);font-size:11.5px;color:var(--ink-2);
+}
+.legend div{display:flex;align-items:center;gap:6px;margin-top:4px}
+.legend div:first-child{margin-top:0}
+.legend i{width:9px;height:9px;border-radius:2px;display:block}
+.stage-empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;text-align:center;padding:24px;z-index:5;
+}
+.stage-empty h2{font-family:'Fraunces',Georgia,serif;font-size:26px;font-weight:600;letter-spacing:-.02em}
+.stage-empty p{color:var(--ink-2);max-width:400px;font-size:13.5px}
+.stage-empty .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.stage-empty.hidden{display:none}
+
+/* SVG chart pieces */
+.node{cursor:pointer}
+.node .card-bg{fill:var(--panel);stroke:var(--line);stroke-width:1.25}
+.node:hover .card-bg{stroke:var(--accent-2)}
+.node.sel .card-bg{stroke:var(--accent);stroke-width:2.25}
+.node.focus .card-bg{stroke:var(--bronze);stroke-width:2.25}
+.node .nm{fill:var(--ink);font-size:13px;font-weight:600}
+.node .dt{fill:var(--ink-2);font-size:11px}
+.node .xt{fill:var(--ink-3);font-size:10px}
+.node .ini{fill:#fff;font-size:12px;font-weight:600;text-anchor:middle}
+.node.dim{opacity:.42}
+.ghost .card-bg{fill:none;stroke:var(--ink-3);stroke-width:1.25;stroke-dasharray:4 4;opacity:.75}
+.ghost:hover .card-bg{stroke:var(--accent);opacity:1}
+.ghost text{fill:var(--ink-3);font-size:11.5px;font-weight:550}
+.ghost:hover text{fill:var(--accent)}
+.lnk{fill:none;stroke:var(--line);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lnk.union{stroke:var(--bronze);stroke-width:1.8}
+.lnk.hot{stroke:var(--accent);stroke-width:2.4}
+.udot{fill:var(--bronze)}
+.uyr{fill:var(--ink-3);font-size:9.5px;text-anchor:middle}
+.gen-band{fill:var(--ink);opacity:.022}
+.gen-label{fill:var(--ink-3);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+
+/* ─────────── Detail panel ─────────── */
+.detail{
+  width:var(--detail);flex:0 0 auto;background:var(--panel);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0;z-index:20;
+}
+.detail.hidden{display:none}
+.dhead{padding:14px 14px 12px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.dhead-txt{min-width:0;flex:1}
+.dhead h2{font-family:'Fraunces',Georgia,serif;font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.01em;word-break:break-word}
+.dhead .sub{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.photo-btn{position:relative;flex:0 0 auto;border-radius:50%}
+.photo-btn .cam{
+  position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border-radius:50%;
+  background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink-2);
+}
+.photo-btn:hover .cam{color:var(--accent);border-color:var(--accent)}
+.photo-btn .cam svg{width:11px;height:11px}
+.dtabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid var(--line)}
+.dtab{padding:6px 9px 8px;font-size:12.5px;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:6px 6px 0 0}
+.dtab:hover{color:var(--ink-2)}
+.dtab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.dbody{flex:1 1 auto;overflow-y:auto;padding:14px;min-height:0}
+.dpane{display:none} .dpane.on{display:block}
+.grp{margin-bottom:16px}
+.grp-h{
+  font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);
+  margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;
+}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.fl{display:block;font-size:11.5px;font-weight:550;color:var(--ink-2);margin-bottom:3px}
+.fw{margin-bottom:8px}
+.hint{font-size:11px;color:var(--ink-3);margin-top:3px}
+.chk{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:4px 0}
+.chk input{accent-color:var(--accent);width:15px;height:15px}
+.relrow{
+  display:flex;align-items:center;gap:9px;padding:6px;border-radius:var(--radius-sm);
+  border:1px solid var(--line-2);margin-bottom:5px;background:var(--panel-2);
+}
+.relrow .pitem-txt{cursor:pointer}
+.relrow .tag{
+  font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px;background:var(--bg-2);
+  color:var(--ink-3);text-transform:capitalize;flex:0 0 auto;
+}
+.relrow .x{width:22px;height:22px;border-radius:5px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.relrow .x:hover{background:var(--danger-soft);color:var(--danger)}
+.relrow .x svg{width:13px;height:13px}
+.addbtn{
+  width:100%;padding:7px;border:1px dashed var(--line);border-radius:var(--radius-sm);
+  color:var(--ink-3);font-size:12.5px;font-weight:550;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.addbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.addbtn svg{width:14px;height:14px}
+.dfoot{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px}
+.btn{
+  height:34px;padding:0 13px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+  border:1px solid var(--line);color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:.12s;background:var(--panel);
+}
+.btn:hover{background:var(--bg-2);color:var(--ink)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+.btn.dgr{color:var(--danger);border-color:transparent}
+.btn.dgr:hover{background:var(--danger-soft)}
+.btn.wide{width:100%}
+.btn svg{width:15px;height:15px}
+.evrow{border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:9px;margin-bottom:7px;background:var(--panel-2)}
+.evrow .top{display:flex;gap:6px;margin-bottom:6px}
+.evrow .top .field{height:30px;font-size:12.5px}
+
+/* ─────────── Stats / checks ─────────── */
+.stat{background:var(--panel-2);border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:9px 10px}
+.stat .n{font-family:'Fraunces',Georgia,serif;font-size:21px;font-weight:600;line-height:1.1}
+.stat .l{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.bars{display:flex;flex-direction:column;gap:5px}
+.bar{display:flex;align-items:center;gap:7px;font-size:12px}
+.bar .bl{display:block;width:74px;flex:0 0 auto;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .bt{display:block;flex:1;height:7px;background:var(--bg-2);border-radius:4px;overflow:hidden}
+.bar .bf{display:block;height:100%;min-width:2px;background:var(--accent);border-radius:4px}
+.bar .bv{display:block;width:30px;text-align:right;color:var(--ink-3);font-size:11px;flex:0 0 auto}
+.issue{
+  display:flex;gap:8px;padding:8px 9px;border:1px solid var(--line-2);border-radius:var(--radius-sm);
+  margin-bottom:6px;background:var(--panel-2);text-align:left;width:100%;
+}
+.issue:hover{border-color:var(--accent)}
+.issue .dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+.issue.err .dot{background:var(--danger)} .issue.warn .dot{background:var(--warn)} .issue.info .dot{background:var(--accent)}
+.issue .t{font-size:12.5px;font-weight:600;line-height:1.35}
+.issue .d{font-size:11.5px;color:var(--ink-3);line-height:1.45;margin-top:1px}
+
+/* ─────────── Overlays ─────────── */
+.scrim{position:fixed;inset:0;background:rgba(15,20,19,.42);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.scrim.hidden{display:none}
+.modal{background:var(--panel);border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:520px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+.modal.wide{max-width:760px}
+.mhead{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mhead h3{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:600}
+.mhead p{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.mbody{padding:16px 18px;overflow-y:auto;flex:1 1 auto;min-height:0}
+.mfoot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.xbtn{width:28px;height:28px;border-radius:6px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.xbtn:hover{background:var(--bg-2);color:var(--ink)}
+.xbtn svg{width:16px;height:16px}
+.menu{
+  position:fixed;z-index:110;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow-lg);padding:5px;min-width:186px;
+}
+.menu.hidden{display:none}
+.menu button{
+  display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:6px;
+  font-size:13px;color:var(--ink-2);text-align:left;
+}
+.menu button:hover{background:var(--bg-2);color:var(--ink)}
+.menu button.dgr:hover{background:var(--danger-soft);color:var(--danger)}
+.menu button svg{width:15px;height:15px;flex:0 0 auto;opacity:.75}
+.menu hr{border:none;border-top:1px solid var(--line);margin:4px 2px}
+.menu .mlabel{padding:5px 9px 3px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(90px);z-index:200;
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13px;font-weight:550;
+  box-shadow:var(--shadow-lg);transition:transform .25s cubic-bezier(.2,.8,.3,1);max-width:88vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.picker-list{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;margin-top:8px}
+.kbd{
+  display:inline-block;padding:1px 5px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;
+  background:var(--panel-2);font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-2);
+}
+.shortcut-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line-2);font-size:13px}
+.shortcut-row:last-child{border-bottom:none}
+.relresult{text-align:center;padding:18px 10px;background:var(--panel-2);border-radius:var(--radius);border:1px solid var(--line-2);margin-top:12px}
+.relresult .big{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:600;color:var(--accent);line-height:1.3}
+.relresult .path{font-size:12px;color:var(--ink-3);margin-top:7px;line-height:1.6}
+.tl-item{display:flex;gap:11px;padding-bottom:14px;position:relative}
+.tl-item::before{content:'';position:absolute;left:5px;top:16px;bottom:0;width:1.5px;background:var(--line)}
+.tl-item:last-child::before{display:none}
+.tl-dot{width:11px;height:11px;border-radius:50%;border:2.5px solid var(--accent);background:var(--panel);margin-top:4px;flex:0 0 auto;z-index:1}
+.tl-y{font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:.02em}
+.tl-t{font-size:13px;font-weight:550;margin-top:1px}
+.tl-p{font-size:11.5px;color:var(--ink-3)}
+.tag-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:20px;background:var(--bronze-soft);color:var(--bronze);font-size:11.5px;font-weight:600;margin:0 4px 4px 0}
+.tag-chip button{color:inherit;opacity:.6;display:flex}
+.tag-chip button:hover{opacity:1}
+.tag-chip svg{width:11px;height:11px}
+.mobile-only{display:none}
+@media (max-width:1180px){ :root{--rail:230px;--detail:340px} }
+@media (max-width:900px){
+  .mobile-only{display:inline-flex}
+  .rail{position:absolute;left:0;top:0;bottom:0;box-shadow:var(--shadow-lg);transform:translateX(-101%);transition:transform .2s}
+  .rail.open{transform:none}
+  .detail{position:absolute;right:0;top:0;bottom:0;width:min(400px,100%);box-shadow:var(--shadow-lg)}
+  .desktop-only{display:none!important}
+  .brand-name{display:none}
+  .legend{display:none}
+}
+@media print{
+  .topbar,.rail,.detail,.chartbar,.zoomer,.legend,.scrim,.toast{display:none!important}
+  body,.stage{background:#fff}
+  .stage::before{display:none}
+}
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h9.5a6.5 6.5 0 0 1 0 13H8"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9h-9.5a6.5 6.5 0 0 0 0 13H16"/></symbol>
+  <symbol id="i-zin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-zout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M8 3v6h8M8 21v-6h8v6"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+  <symbol id="i-import" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M8 12l4 4 4-4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-user-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 7v6M16 10h6"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.6-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6C19 15.4 12 20 12 20z"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a4 4 0 0 0 6 .5l3-3a4 4 0 0 0-5.7-5.7L11.5 6.6"/><path d="M14 11a4 4 0 0 0-6-.5l-3 3a4 4 0 0 0 5.7 5.7l1.8-1.8"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5A2.5 2.5 0 1 1 12 12.5V14"/><path d="M12 17.5v.01"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 7v4M5 16v-2.5h14V16"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-9 9"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+</svg>
+
+<div id="app">
+  <header class="topbar">
+    <button class="tbtn icon mobile-only" id="btn-rail" title="Menu"><svg><use href="#i-menu"/></svg></button>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="6" r="4" fill="var(--accent)"/>
+        <circle cx="7" cy="25" r="4" fill="var(--bronze)"/>
+        <circle cx="25" cy="25" r="4" fill="var(--bronze)"/>
+        <path d="M16 10v5M7 21v-4h18v4" stroke="var(--ink-3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-name">Kinfolk</span>
+    </div>
+    <input class="tree-name" id="tree-name" value="My Family Tree" spellcheck="false" aria-label="Tree name">
+    <div class="tsep desktop-only"></div>
+    <button class="tbtn primary" id="btn-add"><svg><use href="#i-user-plus"/></svg><span class="desktop-only">Add person</span></button>
+    <button class="tbtn icon" id="btn-undo" title="Undo (Ctrl+Z)"><svg><use href="#i-undo"/></svg></button>
+    <button class="tbtn icon" id="btn-redo" title="Redo (Ctrl+Shift+Z)"><svg><use href="#i-redo"/></svg></button>
+    <div class="spacer"></div>
+    <button class="tbtn desktop-only" id="btn-rel"><svg><use href="#i-link"/></svg>Relationship</button>
+    <button class="tbtn desktop-only" id="btn-trees"><svg><use href="#i-tree"/></svg>Trees</button>
+    <button class="tbtn" id="btn-io"><svg><use href="#i-export"/></svg><span class="desktop-only">Import / Export</span></button>
+    <div class="tsep"></div>
+    <button class="tbtn icon" id="btn-theme" title="Toggle theme"><svg><use href="#i-moon"/></svg></button>
+    <button class="tbtn icon desktop-only" id="btn-help" title="Help &amp; shortcuts"><svg><use href="#i-help"/></svg></button>
+  </header>
+
+  <div class="body">
+    <aside class="rail" id="rail">
+      <div class="rail-tabs">
+        <button class="rail-tab on" data-rail="people">People</button>
+        <button class="rail-tab" data-rail="checks">Checks</button>
+        <button class="rail-tab" data-rail="stats">Stats</button>
+      </div>
+      <div class="rail-body">
+        <div class="rail-pane on" id="pane-people">
+          <div class="searchwrap">
+            <svg><use href="#i-search"/></svg>
+            <input class="field with-icon" id="q" placeholder="Search people…  ( / )" autocomplete="off">
+          </div>
+          <div class="rowfilter">
+            <select class="field" id="f-sort">
+              <option value="name">Sort: Surname</option>
+              <option value="given">Sort: First name</option>
+              <option value="birth">Sort: Birth date</option>
+              <option value="recent">Sort: Recently added</option>
+            </select>
+            <select class="field" id="f-show">
+              <option value="all">All</option>
+              <option value="living">Living</option>
+              <option value="deceased">Deceased</option>
+              <option value="orphan">Unlinked</option>
+            </select>
+          </div>
+          <div class="plist" id="plist"></div>
+        </div>
+        <div class="rail-pane" id="pane-checks"></div>
+        <div class="rail-pane" id="pane-stats"></div>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <svg id="chart"><g id="viewport"></g></svg>
+      <div class="chartbar">
+        <div class="seg" id="mode-seg">
+          <button data-mode="hourglass" class="on">Hourglass</button>
+          <button data-mode="ancestors">Ancestors</button>
+          <button data-mode="descendants">Descendants</button>
+        </div>
+        <div class="pill desktop-only">
+          <label for="depth-up">Up</label><input type="range" id="depth-up" min="0" max="8" value="3"><span id="depth-up-v">3</span>
+        </div>
+        <div class="pill desktop-only">
+          <label for="depth-dn">Down</label><input type="range" id="depth-dn" min="0" max="8" value="3"><span id="depth-dn-v">3</span>
+        </div>
+        <label class="pill desktop-only" style="cursor:pointer"><input type="checkbox" id="opt-sibs" checked>Siblings</label>
+        <label class="pill desktop-only" style="cursor:pointer"><input type="checkbox" id="opt-ghosts" checked>Add-hints</label>
+      </div>
+      <div class="legend desktop-only">
+        <div><i style="background:var(--male)"></i>Male</div>
+        <div><i style="background:var(--female)"></i>Female</div>
+        <div><i style="background:var(--bronze)"></i>Union / focus</div>
+      </div>
+      <div class="zoomer">
+        <button class="zbtn" id="z-in" title="Zoom in (+)"><svg><use href="#i-zin"/></svg></button>
+        <button class="zbtn" id="z-out" title="Zoom out (−)"><svg><use href="#i-zout"/></svg></button>
+        <button class="zbtn" id="z-fit" title="Fit to screen (F)"><svg><use href="#i-fit"/></svg></button>
+        <button class="zbtn" id="z-home" title="Centre on focus person (H)"><svg><use href="#i-target"/></svg></button>
+      </div>
+      <div class="stage-empty hidden" id="stage-empty">
+        <svg width="54" height="54" viewBox="0 0 32 32" fill="none" style="opacity:.5">
+          <circle cx="16" cy="6" r="4" fill="var(--accent)"/><circle cx="7" cy="25" r="4" fill="var(--bronze)"/>
+          <circle cx="25" cy="25" r="4" fill="var(--bronze)"/>
+          <path d="M16 10v5M7 21v-4h18v4" stroke="var(--ink-3)" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <h2 class="serif">Start your family tree</h2>
+        <p>Add yourself first — then build outwards with parents, partners and children. Everything is stored privately in this browser.</p>
+        <div class="row">
+          <button class="btn pri" id="empty-add"><svg><use href="#i-user-plus"/></svg>Add the first person</button>
+          <button class="btn" id="empty-sample">Load a sample tree</button>
+          <button class="btn" id="empty-import"><svg><use href="#i-import"/></svg>Import GEDCOM / JSON</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="detail hidden" id="detail">
+      <div class="dhead">
+        <button class="photo-btn" id="photo-btn" title="Add or change photo">
+          <span class="avatar lg" id="d-avatar"></span>
+          <span class="cam"><svg><use href="#i-camera"/></svg></span>
+        </button>
+        <div class="dhead-txt">
+          <h2 id="d-name">—</h2>
+          <div class="sub" id="d-sub"></div>
+        </div>
+        <button class="xbtn" id="d-close" title="Close"><svg><use href="#i-x"/></svg></button>
+      </div>
+      <div class="dtabs">
+        <button class="dtab on" data-dtab="facts">Facts</button>
+        <button class="dtab" data-dtab="family">Family</button>
+        <button class="dtab" data-dtab="events">Events</button>
+        <button class="dtab" data-dtab="notes">Notes</button>
+      </div>
+      <div class="dbody">
+        <div class="dpane on" id="dp-facts"></div>
+        <div class="dpane" id="dp-family"></div>
+        <div class="dpane" id="dp-events"></div>
+        <div class="dpane" id="dp-notes"></div>
+      </div>
+      <div class="dfoot">
+        <button class="btn pri" id="d-focus"><svg><use href="#i-target"/></svg>Centre tree here</button>
+        <div class="spacer"></div>
+        <button class="btn dgr" id="d-delete" title="Delete this person"><svg><use href="#i-trash"/></svg></button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="scrim hidden" id="scrim">
+  <div class="modal" id="modal">
+    <div class="mhead"><div><h3 id="m-title">Title</h3><p id="m-sub" hidden></p></div>
+      <button class="xbtn" id="m-x"><svg><use href="#i-x"/></svg></button></div>
+    <div class="mbody" id="m-body"></div>
+    <div class="mfoot" id="m-foot"></div>
+  </div>
+</div>
+<div class="menu hidden" id="ctx"></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="file-in" hidden accept=".json,.ged,.gedcom,application/json,text/plain">
+<input type="file" id="photo-in" hidden accept="image/*">
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════════
+   Kinfolk — a single-file family tree builder.
+   Data model follows the GEDCOM lineage-linked shape: individuals (people)
+   and families (unions). Modelling unions separately is what makes
+   remarriages, half-siblings and step-children representable.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── tiny helpers ─────────────────────────────────────────────────────── */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = p => p + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+const clone = o => JSON.parse(JSON.stringify(o));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const uniq = a => Array.from(new Set(a));
+const debounce = (fn, ms) => { let t; return function () { const a = arguments; clearTimeout(t); t = setTimeout(() => fn.apply(null, a), ms); }; };
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ─── dates ────────────────────────────────────────────────────────────────
+   Genealogy dates are frequently partial ("1890") or fuzzy ("abt 1890").
+   We keep the user's raw text and derive a structured value for sorting,
+   age maths and GEDCOM output. Never silently rewrite what was typed.
+   ──────────────────────────────────────────────────────────────────────── */
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MON_L = MON.map(m => m.toLowerCase());
+const QUALS = [
+  [/^(abt|about|circa|ca|c|~)\.?\s+/i, 'about'],
+  [/^(bef|before|<)\.?\s*/i, 'before'],
+  [/^(aft|after|>)\.?\s*/i, 'after'],
+  [/^(est|estimated)\.?\s+/i, 'estimated'],
+  [/^(cal|calculated)\.?\s+/i, 'calculated']
+];
+
+function parseDate(raw) {
+  if (!raw) return null;
+  let s = String(raw).trim();
+  if (!s) return null;
+  let qual = '';
+  for (const [re, name] of QUALS) { if (re.test(s)) { qual = name; s = s.replace(re, '').trim(); break; } }
+  // "bet 1890 and 1895" → anchor on the first date, keep the text intact
+  const bet = s.match(/^(?:bet|between)\.?\s+(.+?)\s+(?:and|-|–)\s+(.+)$/i);
+  if (bet) { const a = parseDate(bet[1]); if (a) return Object.assign({}, a, { qual: 'between', raw: raw }); }
+  let y = null, m = null, d = null;
+  let mt;
+  if ((mt = s.match(/^(\d{3,4})-(\d{1,2})-(\d{1,2})$/)))      { y = +mt[1]; m = +mt[2]; d = +mt[3]; }
+  else if ((mt = s.match(/^(\d{3,4})-(\d{1,2})$/)))            { y = +mt[1]; m = +mt[2]; }
+  else if ((mt = s.match(/^(\d{3,4})$/)))                      { y = +mt[1]; }
+  else if ((mt = s.match(/^(\d{1,2})\s+([a-z]{3,9})\.?,?\s+(\d{3,4})$/i))) { d = +mt[1]; m = monNum(mt[2]); y = +mt[3]; }
+  else if ((mt = s.match(/^([a-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{3,4})$/i)))  { m = monNum(mt[1]); d = +mt[2]; y = +mt[3]; }
+  else if ((mt = s.match(/^([a-z]{3,9})\.?,?\s+(\d{3,4})$/i)))              { m = monNum(mt[1]); y = +mt[2]; }
+  else if ((mt = s.match(/^(\d{1,2})[/.](\d{1,2})[/.](\d{3,4})$/)))         {
+    // Ambiguous slash form: if the first part cannot be a month, read it as day-first.
+    if (+mt[1] > 12) { d = +mt[1]; m = +mt[2]; } else { m = +mt[1]; d = +mt[2]; }
+    y = +mt[3];
+  }
+  else if ((mt = s.match(/^(\d{1,2})[/.](\d{3,4})$/)))                      { m = +mt[1]; y = +mt[2]; }
+  else { const any = s.match(/(\d{3,4})/); if (any) { y = +any[1]; } }
+  if (y == null || !isFinite(y)) return null;
+  if (m != null && (m < 1 || m > 12)) { m = null; d = null; }
+  if (d != null && (d < 1 || d > 31)) d = null;
+  return { y: y, m: m, d: d, qual: qual, raw: String(raw).trim() };
+}
+function monNum(t) { const i = MON_L.indexOf(String(t).slice(0, 3).toLowerCase()); return i < 0 ? null : i + 1; }
+function fmtDate(raw) {
+  const p = parseDate(raw); if (!p) return raw ? String(raw) : '';
+  let core = String(p.y);
+  if (p.m) core = (p.d ? p.d + ' ' : '') + MON[p.m - 1] + ' ' + p.y;
+  const pre = { about: 'abt ', before: 'bef ', after: 'aft ', estimated: 'est ', calculated: 'cal ', between: 'bet ' }[p.qual] || '';
+  return pre + core;
+}
+/** Sortable numeric key; unknown month/day sort to the start of their range. */
+function dateKey(raw) { const p = parseDate(raw); return p ? p.y * 10000 + (p.m || 0) * 100 + (p.d || 0) : null; }
+function yearOf(raw) { const p = parseDate(raw); return p ? p.y : null; }
+/** Difference in whole years between two dates, or null when indeterminable. */
+function yearsBetween(a, b) {
+  const A = parseDate(a), B = parseDate(b);
+  if (!A || !B) return null;
+  let n = B.y - A.y;
+  if (A.m && B.m) { if (B.m < A.m || (B.m === A.m && A.d && B.d && B.d < A.d)) n--; }
+  return n;
+}
+const THIS_YEAR = new Date().getFullYear();
+
+/* ─── state ───────────────────────────────────────────────────────────── */
+const LS_INDEX = 'kinfolk.trees';
+const LS_TREE  = 'kinfolk.tree.';
+const LS_PREFS = 'kinfolk.prefs';
+
+function blankTree(name) {
+  return {
+    id: uid('t_'), name: name || 'My Family Tree',
+    created: Date.now(), modified: Date.now(),
+    people: {}, families: {}, focus: null, seq: 0
+  };
+}
+function blankPerson(patch) {
+  return Object.assign({
+    id: uid('i_'), given: '', surname: '', birthSurname: '', nickname: '', suffix: '',
+    sex: 'U', living: true,
+    birth: { date: '', place: '' }, death: { date: '', place: '', cause: '' },
+    occupation: '', religion: '', notes: '', photo: null,
+    events: [], tags: [], added: Date.now()
+  }, patch || {});
+}
+function blankFamily(patch) {
+  return Object.assign({
+    id: uid('f_'), partners: [null, null], status: 'married',
+    marriage: { date: '', place: '' }, divorce: { date: '' },
+    children: [], notes: ''
+  }, patch || {});
+}
+
+let T = blankTree();                       // the working tree
+let sel = null;                            // selected person id
+let prefs = { theme: 'light', mode: 'hourglass', up: 3, down: 3, sibs: true, ghosts: true };
+const undoStack = [], redoStack = [];
+let lastSnapshot = null;
+
+/* ─── indexes (rebuilt on every mutation; trees are small) ─────────────── */
+let IDX = { famc: {}, fams: {} };
+function reindex() {
+  const famc = {}, fams = {};
+  for (const fid in T.families) {
+    const f = T.families[fid];
+    f.partners.forEach(pid => { if (pid && T.people[pid]) (fams[pid] = fams[pid] || []).push(fid); });
+    f.children.forEach(c => { if (c.id && T.people[c.id]) (famc[c.id] = famc[c.id] || []).push(fid); });
+  }
+  IDX = { famc: famc, fams: fams };
+}
+const P  = id => T.people[id] || null;
+const F  = id => T.families[id] || null;
+const famsOf  = id => (IDX.fams[id] || []).map(F).filter(Boolean);   // unions this person is a partner in
+const famcOf  = id => (IDX.famc[id] || []).map(F).filter(Boolean);   // unions this person is a child of
+function partnersOf(id) {
+  const out = [];
+  famsOf(id).forEach(f => f.partners.forEach(p => { if (p && p !== id) out.push(p); }));
+  return uniq(out);
+}
+function parentsOf(id) {
+  const out = [];
+  famcOf(id).forEach(f => f.partners.forEach(p => { if (p) out.push(p); }));
+  return uniq(out);
+}
+function childrenOf(id) {
+  const out = [];
+  famsOf(id).forEach(f => f.children.forEach(c => out.push(c.id)));
+  return uniq(out).filter(P);
+}
+/** Siblings, tagged full (shares every known parent) or half. */
+function siblingsOf(id) {
+  const mine = parentsOf(id), out = [];
+  famcOf(id).forEach(f => f.children.forEach(c => {
+    if (c.id === id || !P(c.id)) return;
+    const theirs = parentsOf(c.id);
+    const shared = mine.filter(p => theirs.indexOf(p) >= 0).length;
+    const full = shared >= 2 || (shared === mine.length && shared === theirs.length && shared > 0);
+    out.push({ id: c.id, kind: full ? 'full' : 'half' });
+  }));
+  const seen = {};
+  return out.filter(s => (seen[s.id] ? false : (seen[s.id] = true)));
+}
+function otherPartner(f, id) { return f.partners[0] === id ? f.partners[1] : f.partners[0]; }
+function relOfChild(f, cid) { const c = f.children.find(x => x.id === cid); return c ? c.rel : 'birth'; }
+
+/* ─── names & display ─────────────────────────────────────────────────── */
+function fullName(p) {
+  if (!p) return 'Unknown';
+  const n = [p.given, p.surname].filter(Boolean).join(' ').trim();
+  const s = p.suffix ? n + ' ' + p.suffix : n;
+  return s || '(unnamed)';
+}
+function displayName(p) {
+  if (!p) return 'Unknown';
+  let n = fullName(p);
+  if (p.birthSurname && p.birthSurname !== p.surname) n += ' (née ' + p.birthSurname + ')';
+  return n;
+}
+function initials(p) {
+  if (!p) return '?';
+  const a = (p.given || '').trim()[0] || '', b = (p.surname || '').trim()[0] || '';
+  return ((a + b) || '?').toUpperCase();
+}
+const sexCls = p => p && p.sex === 'M' ? 'm' : p && p.sex === 'F' ? 'f' : '';
+function isDeceased(p) { return !!(p && (!p.living || p.death.date || p.death.place)); }
+/** "1890–1962", "b. 1890", "1890–" … */
+function lifespan(p) {
+  if (!p) return '';
+  const b = yearOf(p.birth.date), d = yearOf(p.death.date);
+  if (b && d) return b + '–' + d;
+  if (b) return isDeceased(p) ? b + '– ' : 'b. ' + b;
+  if (d) return 'd. ' + d;
+  return isDeceased(p) ? 'deceased' : '';
+}
+function ageOf(p) {
+  if (!p) return null;
+  if (!p.birth.date) return null;
+  if (isDeceased(p)) { return p.death.date ? yearsBetween(p.birth.date, p.death.date) : null; }
+  const y = yearOf(p.birth.date); return y == null ? null : THIS_YEAR - y;
+}
+function avatarHTML(p, cls) {
+  const c = 'avatar ' + (cls || '') + ' ' + sexCls(p);
+  if (p && p.photo) return '<img class="' + c + '" src="' + esc(p.photo) + '" alt="">';
+  return '<span class="' + c + '">' + esc(initials(p)) + '</span>';
+}
+function allPeople() { return Object.keys(T.people).map(id => T.people[id]); }
+function sortPeople(list, how) {
+  const byName = (a, b) => (a.surname || '￿').localeCompare(b.surname || '￿') || (a.given || '').localeCompare(b.given || '');
+  if (how === 'given')  return list.sort((a, b) => (a.given || '￿').localeCompare(b.given || '￿') || byName(a, b));
+  if (how === 'birth')  return list.sort((a, b) => { const x = dateKey(a.birth.date), y = dateKey(b.birth.date); if (x == null && y == null) return byName(a, b); if (x == null) return 1; if (y == null) return -1; return x - y; });
+  if (how === 'recent') return list.sort((a, b) => (b.added || 0) - (a.added || 0));
+  return list.sort(byName);
+}
+
+/* ─── persistence & undo ──────────────────────────────────────────────── */
+function loadPrefs() {
+  try { const raw = localStorage.getItem(LS_PREFS); if (raw) Object.assign(prefs, JSON.parse(raw)); } catch (e) {}
+}
+const savePrefs = debounce(() => { try { localStorage.setItem(LS_PREFS, JSON.stringify(prefs)); } catch (e) {} }, 250);
+function treeIndex() {
+  try { return JSON.parse(localStorage.getItem(LS_INDEX) || '[]'); } catch (e) { return []; }
+}
+function writeIndex(list) { try { localStorage.setItem(LS_INDEX, JSON.stringify(list)); } catch (e) {} }
+function persistNow() {
+  T.modified = Date.now();
+  try {
+    localStorage.setItem(LS_TREE + T.id, JSON.stringify(T));
+    const list = treeIndex().filter(t => t.id !== T.id);
+    list.unshift({ id: T.id, name: T.name, modified: T.modified, count: Object.keys(T.people).length });
+    writeIndex(list);
+  } catch (e) {}
+}
+const persist = debounce(() => {
+  T.modified = Date.now();
+  try {
+    localStorage.setItem(LS_TREE + T.id, JSON.stringify(T));
+    const list = treeIndex().filter(t => t.id !== T.id);
+    list.unshift({ id: T.id, name: T.name, modified: T.modified, count: Object.keys(T.people).length });
+    writeIndex(list);
+  } catch (e) {
+    toast('Could not save — browser storage is full. Export your tree to a file.');
+  }
+}, 400);
+
+/** Take a snapshot before a mutation, then run it and refresh everything. */
+function mutate(fn, label) {
+  const before = JSON.stringify({ people: T.people, families: T.families, focus: T.focus, name: T.name });
+  fn();
+  const after = JSON.stringify({ people: T.people, families: T.families, focus: T.focus, name: T.name });
+  if (before !== after) {
+    undoStack.push(before);
+    if (undoStack.length > 80) undoStack.shift();
+    redoStack.length = 0;
+  }
+  reindex(); persist(); renderAll();
+  if (label) toast(label);
+}
+function applySnapshot(json) {
+  const s = JSON.parse(json);
+  T.people = s.people; T.families = s.families; T.focus = s.focus; T.name = s.name;
+  if (sel && !T.people[sel]) sel = null;
+  reindex(); persist(); renderAll();
+}
+function undo() {
+  if (!undoStack.length) return toast('Nothing to undo');
+  const cur = JSON.stringify({ people: T.people, families: T.families, focus: T.focus, name: T.name });
+  redoStack.push(cur); applySnapshot(undoStack.pop()); toast('Undone');
+}
+function redo() {
+  if (!redoStack.length) return toast('Nothing to redo');
+  const cur = JSON.stringify({ people: T.people, families: T.families, focus: T.focus, name: T.name });
+  undoStack.push(cur); applySnapshot(redoStack.pop()); toast('Redone');
+}
+
+/* ─── graph editing ───────────────────────────────────────────────────── */
+function addPerson(patch) {
+  const p = blankPerson(patch);
+  T.people[p.id] = p;
+  if (!T.focus) T.focus = p.id;
+  return p;
+}
+/** Find an existing union between two people, or create one. */
+function unionOf(aId, bId, create) {
+  for (const fid in T.families) {
+    const f = T.families[fid], ps = f.partners;
+    if ((ps[0] === aId && ps[1] === bId) || (ps[0] === bId && ps[1] === aId)) return f;
+  }
+  if (!create) return null;
+  const f = blankFamily({ partners: [aId, bId] });
+  T.families[f.id] = f; return f;
+}
+/** The union a person should parent children into: an existing one, or a solo union. */
+function primaryUnionFor(pid, create) {
+  const list = famsOf(pid);
+  if (list.length) return list[0];
+  if (!create) return null;
+  const f = blankFamily({ partners: [pid, null], status: 'unknown' });
+  T.families[f.id] = f; return f;
+}
+function linkPartners(aId, bId, status) {
+  const solos = famsOf(aId).filter(f => !otherPartner(f, aId));
+  let f;
+  if (solos.length) { f = solos[0]; f.partners = [aId, bId]; }
+  else f = unionOf(aId, bId, true);
+  if (status) f.status = status;
+  return f;
+}
+function linkChild(famId, childId, rel) {
+  const f = F(famId); if (!f) return;
+  if (!f.children.some(c => c.id === childId)) f.children.push({ id: childId, rel: rel || 'birth' });
+}
+/** Attach `childId` beneath `parentId`, reusing that parent's union when possible. */
+function addChildTo(parentId, childId, rel) {
+  const f = primaryUnionFor(parentId, true);
+  linkChild(f.id, childId, rel);
+}
+/** Attach `parentId` above `childId`, reusing the child's existing parent union. */
+function addParentTo(childId, parentId) {
+  const existing = famcOf(childId);
+  for (const f of existing) {
+    const idx = f.partners.indexOf(null);
+    if (idx >= 0) { f.partners[idx] = parentId; return f; }
+  }
+  const f = blankFamily({ partners: [parentId, null], status: 'unknown', children: [{ id: childId, rel: 'birth' }] });
+  T.families[f.id] = f; return f;
+}
+function unlinkChild(famId, childId) {
+  const f = F(famId); if (!f) return;
+  f.children = f.children.filter(c => c.id !== childId);
+  pruneFamily(f);
+}
+function unlinkPartner(famId, pid) {
+  const f = F(famId); if (!f) return;
+  f.partners = f.partners.map(x => x === pid ? null : x);
+  pruneFamily(f);
+}
+/** Drop unions that no longer connect anyone meaningful. */
+function pruneFamily(f) {
+  const live = f.partners.filter(Boolean).length;
+  if ((live === 0 && f.children.length <= 1) || (live === 1 && f.children.length === 0)) delete T.families[f.id];
+}
+function deletePerson(id) {
+  delete T.people[id];
+  for (const fid in T.families) {
+    const f = T.families[fid];
+    f.partners = f.partners.map(x => x === id ? null : x);
+    f.children = f.children.filter(c => c.id !== id);
+    pruneFamily(f);
+  }
+  if (T.focus === id) T.focus = Object.keys(T.people)[0] || null;
+  if (sel === id) sel = null;
+}
+/** True when `ancId` appears above `id` — used to refuse cyclic links. */
+function isAncestorOf(ancId, id, guard) {
+  guard = guard || new Set();
+  if (id === ancId) return true;
+  if (guard.has(id)) return false;
+  guard.add(id);
+  return parentsOf(id).some(p => isAncestorOf(ancId, p, guard));
+}
+
+/* ─── relationship calculator ─────────────────────────────────────────────
+   Blood relationships resolve through the nearest common ancestor; the
+   (degree, removal) pair then names the cousinship. Anything with no blood
+   path falls back to marriage: spouse, in-law, or step.
+   ──────────────────────────────────────────────────────────────────────── */
+const ORD = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+function ordinal(n) { return ORD[n] || (n + 'th'); }
+function greats(n, base) {
+  // n = 0 → base ("grandmother"); n = 1 → "great-grandmother"; …
+  if (n <= 0) return base;
+  if (n === 1) return 'great-' + base;
+  if (n === 2) return 'great-great-' + base;
+  return n + '× great-' + base;
+}
+function timesRemoved(n) { return n === 0 ? '' : n === 1 ? ' once removed' : n === 2 ? ' twice removed' : ' ' + n + ' times removed'; }
+/** Map of ancestorId → shortest generational distance from `id`. */
+function ancestorMap(id, max) {
+  const out = new Map(); const q = [[id, 0]];
+  while (q.length) {
+    const [cur, d] = q.shift();
+    if (out.has(cur) && out.get(cur) <= d) continue;
+    out.set(cur, d);
+    if (d >= (max || 25)) continue;
+    parentsOf(cur).forEach(p => q.push([p, d + 1]));
+  }
+  return out;
+}
+const G = (p, m, f, n) => p && p.sex === 'M' ? m : p && p.sex === 'F' ? f : n;
+
+function relationship(aId, bId, _d) {
+  _d = _d || 0;
+  const a = P(aId), b = P(bId);
+  if (!a || !b) return null;
+  if (aId === bId) return { label: 'the same person', detail: '' };
+
+  const A = ancestorMap(aId), B = ancestorMap(bId);
+  let best = null;
+  A.forEach((da, anc) => {
+    if (!B.has(anc)) return;
+    const db = B.get(anc), total = da + db;
+    if (!best || total < best.total || (total === best.total && Math.abs(da - db) < Math.abs(best.da - best.db)))
+      best = { anc: anc, da: da, db: db, total: total };
+  });
+
+  if (best) {
+    const { da, db, anc } = best;
+    const adopt = pathHasNonBirth(aId, anc) || pathHasNonBirth(bId, anc);
+    const via = 'Nearest common ancestor: ' + displayName(P(anc)) + '.'
+      + (adopt ? ' This line runs through an adopted, step or foster link.' : '');
+    // b is a direct ancestor of a
+    const note = adopt ? 'This line runs through an adopted, step or foster link.' : '';
+    if (db === 0) {
+      if (da === 1) return { label: G(b, 'father', 'mother', 'parent') + ' of ' + fullName(a), detail: note };
+      if (da === 2) return { label: G(b, 'grandfather', 'grandmother', 'grandparent') + ' of ' + fullName(a), detail: note };
+      return { label: greats(da - 2, G(b, 'grandfather', 'grandmother', 'grandparent')) + ' of ' + fullName(a), detail: note };
+    }
+    if (da === 0) {
+      if (db === 1) return { label: G(b, 'son', 'daughter', 'child') + ' of ' + fullName(a), detail: note };
+      if (db === 2) return { label: G(b, 'grandson', 'granddaughter', 'grandchild') + ' of ' + fullName(a), detail: note };
+      return { label: greats(db - 2, G(b, 'grandson', 'granddaughter', 'grandchild')) + ' of ' + fullName(a), detail: note };
+    }
+    if (da === 1 && db === 1) {
+      const kind = siblingsOf(aId).find(s => s.id === bId);
+      const half = kind && kind.kind === 'half' ? 'half-' : '';
+      if (adopt) return { label: half + G(b, 'brother', 'sister', 'sibling') + ' of ' + fullName(a), detail: via };
+      return { label: half + G(b, 'brother', 'sister', 'sibling') + ' of ' + fullName(a), detail: via };
+    }
+    if (da === 1) { // b descends from a's parent → niece/nephew
+      const base = G(b, 'nephew', 'niece', 'nibling');
+      return { label: (db === 2 ? base : greats(db - 3 + 1, 'grand-' + base)) + ' of ' + fullName(a), detail: via };
+    }
+    if (db === 1) { // b is a sibling of a's ancestor → uncle/aunt
+      const base = G(b, 'uncle', 'aunt', 'parent’s sibling');
+      return { label: (da === 2 ? base : greats(da - 3 + 1, 'grand-' + base)) + ' of ' + fullName(a), detail: via };
+    }
+    const degree = Math.min(da, db) - 1;
+    const removed = Math.abs(da - db);
+    return { label: ordinal(degree) + ' cousin' + timesRemoved(removed) + ' of ' + fullName(a), detail: via };
+  }
+
+  // No blood path — try marriage.
+  if (partnersOf(aId).indexOf(bId) >= 0) {
+    const f = unionOf(aId, bId, false);
+    const st = f ? f.status : 'married';
+    const word = st === 'divorced' ? 'ex-' + G(b, 'husband', 'wife', 'spouse')
+               : st === 'married' ? G(b, 'husband', 'wife', 'spouse') : 'partner';
+    return { label: word + ' of ' + fullName(a), detail: '' };
+  }
+  if (_d >= 1) return { label: 'no relationship found', detail: '', none: true };
+  for (const sp of partnersOf(bId)) {
+    const r = relationship(aId, sp, 1);
+    if (r && !r.inlaw && !r.none && sp !== aId) return { label: r.label.replace(' of ' + fullName(a), '') + '-in-law of ' + fullName(a), detail: 'Through ' + fullName(P(sp)) + '.', inlaw: true };
+  }
+  for (const sp of partnersOf(aId)) {
+    const r = relationship(sp, bId, 1);
+    if (r && !r.inlaw && !r.none && sp !== bId) return { label: r.label.replace(' of ' + fullName(P(sp)), '') + '-in-law of ' + fullName(a), detail: 'Through ' + fullName(P(sp)) + '.', inlaw: true };
+  }
+  // Step relations: a shares a household union with b's parent.
+  for (const f of famsOf(aId)) {
+    if (f.children.some(c => c.id === bId)) return { label: 'step-' + G(b, 'son', 'daughter', 'child') + ' of ' + fullName(a), detail: '', inlaw: true };
+  }
+  for (const f of famsOf(bId)) {
+    if (f.children.some(c => c.id === aId)) return { label: 'step-' + G(b, 'father', 'mother', 'parent') + ' of ' + fullName(a), detail: '', inlaw: true };
+  }
+  return { label: 'no relationship found', detail: 'These two are not connected in this tree.', none: true };
+}
+/** True when the lineage from `from` up to `to` crosses a non-birth child link. */
+function pathHasNonBirth(from, to) {
+  const path = pathUp(from, to);
+  for (let i = 0; i < path.length - 1; i++) {
+    const child = path[i], parent = path[i + 1];
+    const fam = famcOf(child).filter(f => f.partners.indexOf(parent) >= 0)[0];
+    if (fam && relOfChild(fam, child) !== 'birth') return true;
+  }
+  return false;
+}
+/** Chain of names from one person up to a common ancestor and back down. */
+function relationPath(aId, bId) {
+  const A = ancestorMap(aId), B = ancestorMap(bId);
+  let best = null;
+  A.forEach((da, anc) => { if (B.has(anc)) { const t = da + B.get(anc); if (!best || t < best.t) best = { anc: anc, t: t }; } });
+  if (!best) return '';
+  const up = pathUp(aId, best.anc), down = pathUp(bId, best.anc);
+  const names = up.map(id => fullName(P(id))).concat(down.slice(0, -1).reverse().map(id => fullName(P(id))));
+  return names.join(' → ');
+}
+function pathUp(from, to) {
+  const q = [[from, [from]]], seen = new Set();
+  while (q.length) {
+    const [cur, path] = q.shift();
+    if (cur === to) return path;
+    if (seen.has(cur)) continue; seen.add(cur);
+    parentsOf(cur).forEach(p => q.push([p, path.concat([p])]));
+  }
+  return [from];
+}
+
+/* ─── chart layout ────────────────────────────────────────────────────────
+   Blocks are laid out in local coordinates and then translated into place,
+   parent-centred over their children (a tidy-tree arrangement). Widths are
+   accumulated bottom-up so sibling subtrees can never overlap.
+   ──────────────────────────────────────────────────────────────────────── */
+const CARD_W = 210, CARD_H = 78, GHOST_H = 36;
+const HGAP = 26, VGAP = 104, UGAP = 34, ROW = CARD_H + VGAP;
+
+function shiftBlock(b, dx, dy) {
+  b.items.forEach(i => { i.x += dx; i.y += dy; });
+  b.links.forEach(l => l.pts.forEach(p => { p[0] += dx; p[1] += dy; }));
+  b.anchor += dx;
+  return b;
+}
+function mergeBlock(dst, src) { dst.items.push.apply(dst.items, src.items); dst.links.push.apply(dst.links, src.links); }
+function card(id, extra) { return Object.assign({ kind: 'card', id: id, x: 0, y: 0, w: CARD_W, h: CARD_H }, extra || {}); }
+function orderedParents(id) {
+  const ps = parentsOf(id);
+  return ps.slice().sort((a, b) => rank(P(a)) - rank(P(b)));
+  function rank(p) { return !p ? 3 : p.sex === 'M' ? 0 : p.sex === 'F' ? 1 : 2; }
+}
+function marriageYear(f) {
+  const y = yearOf(f.marriage.date);
+  if (y) return (f.status === 'divorced' ? 'm. ' : '') + y;
+  return f.status === 'divorced' ? 'div.' : f.status === 'partners' ? '' : '';
+}
+
+/** Focus person + spouses on one row, descendants stacked below. */
+function buildDescendants(pid, depth, seen) {
+  const items = [], links = [];
+  const expanded = !seen.has(pid);
+  seen.add(pid);
+  const unions = expanded ? famsOf(pid) : [];
+
+  const row = [{ id: pid }];
+  const meta = [];
+  unions.forEach(f => {
+    const sp = otherPartner(f, pid);
+    let idx = -1;
+    if (sp && P(sp) && !seen.has(sp)) { seen.add(sp); row.push({ id: sp, fam: f.id }); idx = row.length - 1; }
+    else if (sp && P(sp)) { row.push({ id: sp, fam: f.id }); idx = row.length - 1; }
+    meta.push({ f: f, spIdx: idx });
+  });
+  const rowW = row.length * CARD_W + (row.length - 1) * HGAP;
+
+  // Children, grouped by union
+  const groups = meta.map(m => ({
+    m: m,
+    kids: depth > 0 ? m.f.children.filter(c => P(c.id) && !seen.has(c.id)).map(c => buildDescendants(c.id, depth - 1, seen)) : []
+  }));
+  let kidsW = 0;
+  groups.forEach(g => {
+    if (!g.kids.length) return;
+    const w = g.kids.reduce((s, k) => s + k.w, 0) + (g.kids.length - 1) * HGAP;
+    g.w = w; kidsW += w + UGAP;
+  });
+  if (kidsW > 0) kidsW -= UGAP;
+
+  const w = Math.max(rowW, kidsW);
+  const rowX = (w - rowW) / 2;
+  row.forEach((r, i) => { const x = rowX + i * (CARD_W + HGAP); items.push(card(r.id, { x: x, y: 0, cx: x + CARD_W / 2 })); });
+  const anchor = rowX + CARD_W / 2;
+
+  let kidX = (w - kidsW) / 2;
+  groups.forEach((g, i) => {
+    const m = g.m, selfCx = rowX + CARD_W / 2;
+    let dropX = selfCx, dropY = CARD_H;
+    if (m.spIdx > 0) {
+      const spCx = rowX + m.spIdx * (CARD_W + HGAP) + CARD_W / 2;
+      const yLine = CARD_H + 13 + i * 9;
+      links.push({ cls: 'lnk union', pts: [[selfCx, CARD_H], [selfCx, yLine], [spCx, yLine], [spCx, CARD_H]] });
+      dropX = (selfCx + spCx) / 2; dropY = yLine;
+      items.push({ kind: 'union', x: dropX, y: dropY, label: marriageYear(m.f), fam: m.f.id });
+    }
+    if (!g.kids.length) return;
+    const busY = ROW - 30;
+    g.kids.forEach((k, j) => {
+      if (j) kidX += HGAP;
+      shiftBlock(k, kidX, ROW);
+      kidX += k.w;
+      links.push({ cls: 'lnk' + (relOfChild(m.f, k.rootId) !== 'birth' ? ' dashed' : ''), pts: [[dropX, dropY], [dropX, busY], [k.anchor, busY], [k.anchor, ROW]] });
+      mergeBlock({ items: items, links: links }, k);
+    });
+    kidX += UGAP;
+  });
+
+  return { items: items, links: links, w: w, anchor: anchor, rootId: pid, rowRight: rowX + rowW - CARD_W };
+}
+
+/** Generations above a person. `drawSelf` false leaves room for a card drawn elsewhere. */
+function ancBlock(pid, depth, seen, drawSelf) {
+  const items = [], links = [];
+  let subBlocks = [], subW = 0, ghost = false;
+  if (depth > 0 && !seen.has(pid)) {
+    seen.add(pid);
+    const par = orderedParents(pid);
+    if (par.length) {
+      subBlocks = par.map(p => ancBlock(p, depth - 1, seen, true));
+      let x = 0;
+      subBlocks.forEach((b, i) => { if (i) x += HGAP; shiftBlock(b, x, 0); x += b.w; });
+      subW = x;
+    } else if (prefs.ghosts) { ghost = true; subW = CARD_W; }
+  }
+  const w = Math.max(CARD_W, subW);
+  const selfX = (w - CARD_W) / 2, selfCx = selfX + CARD_W / 2;
+  if (drawSelf) items.push(card(pid, { x: selfX, y: 0, cx: selfCx }));
+
+  if (subW > 0) {
+    const dx = (w - subW) / 2, dy = -ROW;
+    const busY = -30;
+    if (ghost) {
+      items.push({ kind: 'ghost', x: dx, y: dy + CARD_H - GHOST_H, w: CARD_W, h: GHOST_H, target: pid });
+      links.push({ cls: 'lnk dashed', pts: [[dx + CARD_W / 2, dy + CARD_H], [dx + CARD_W / 2, busY], [selfCx, busY], [selfCx, 0]] });
+    } else {
+      subBlocks.forEach(b => shiftBlock(b, dx, dy));
+      let dropX, dropY;
+      if (subBlocks.length >= 2) {
+        const a = subBlocks[0].anchor, b2 = subBlocks[1].anchor;
+        const yLine = dy + CARD_H + 13;
+        links.push({ cls: 'lnk union', pts: [[a, dy + CARD_H], [a, yLine], [b2, yLine], [b2, dy + CARD_H]] });
+        dropX = (a + b2) / 2; dropY = yLine;
+        const fam = famcOf(pid)[0];
+        if (fam) items.push({ kind: 'union', x: dropX, y: dropY, label: marriageYear(fam), fam: fam.id });
+      } else { dropX = subBlocks[0].anchor; dropY = dy + CARD_H; }
+      links.push({ cls: 'lnk', pts: [[dropX, dropY], [dropX, busY], [selfCx, busY], [selfCx, 0]] });
+      subBlocks.forEach(b => mergeBlock({ items: items, links: links }, b));
+    }
+  }
+  return { items: items, links: links, w: w, anchor: selfCx, busY: -30 };
+}
+
+/** Assemble the whole chart for the current mode. */
+function buildChart() {
+  const fid = T.focus && P(T.focus) ? T.focus : Object.keys(T.people)[0];
+  if (!fid) return null;
+  const mode = prefs.mode;
+  const up = mode === 'descendants' ? 0 : prefs.up;
+  const down = mode === 'ancestors' ? 0 : prefs.down;
+
+  const desc = buildDescendants(fid, down, new Set());
+  const chart = { items: desc.items.slice(), links: desc.links.slice() };
+  const focusCx = desc.anchor;
+
+  if (up > 0) {
+    const anc = ancBlock(fid, up, new Set(), false);
+    shiftBlock(anc, focusCx - anc.anchor, 0);
+    mergeBlock(chart, anc);
+  }
+
+  // Siblings share the focus row, ordered by birth around the focus person.
+  if (prefs.sibs && mode !== 'descendants') {
+    const sibs = siblingsOf(fid);
+    const fk = dateKey(P(fid).birth.date);
+    const withKey = sibs.map(s => ({ s: s, k: dateKey(P(s.id).birth.date) }));
+    withKey.sort((a, b) => (a.k == null ? 1 : b.k == null ? -1 : a.k - b.k));
+    const left = [], right = [];
+    withKey.forEach(o => { (o.k != null && fk != null && o.k > fk ? right : left).push(o.s); });
+    let x = focusCx - CARD_W / 2;
+    left.slice().reverse().forEach(s => {
+      x -= (CARD_W + HGAP);
+      chart.items.push(card(s.id, { x: x, y: 0, cx: x + CARD_W / 2, sib: s.kind }));
+      if (up > 0) chart.links.push({ cls: 'lnk' + (s.kind === 'half' ? ' dashed' : ''), pts: [[x + CARD_W / 2, -30], [x + CARD_W / 2, 0]] });
+      if (up > 0) chart.links.push({ cls: 'lnk', pts: [[x + CARD_W / 2, -30], [focusCx, -30]] });
+    });
+    let rx = desc.rowRight;
+    right.forEach(s => {
+      rx += (CARD_W + HGAP);
+      chart.items.push(card(s.id, { x: rx, y: 0, cx: rx + CARD_W / 2, sib: s.kind }));
+      if (up > 0) chart.links.push({ cls: 'lnk' + (s.kind === 'half' ? ' dashed' : ''), pts: [[rx + CARD_W / 2, -30], [rx + CARD_W / 2, 0]] });
+      if (up > 0) chart.links.push({ cls: 'lnk', pts: [[rx + CARD_W / 2, -30], [focusCx, -30]] });
+    });
+  }
+
+  // Offer an "add parents" hint above the focus person even at depth 0.
+  if (prefs.ghosts && up === 0 && mode === 'descendants' && !parentsOf(fid).length) {
+    const gx = focusCx - CARD_W / 2;
+    chart.items.push({ kind: 'ghost', x: gx, y: -ROW + CARD_H - GHOST_H, w: CARD_W, h: GHOST_H, target: fid });
+    chart.links.push({ cls: 'lnk dashed', pts: [[focusCx, -ROW + CARD_H], [focusCx, 0]] });
+  }
+
+  // Normalise into positive space with a margin.
+  const M = 60;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  chart.items.forEach(i => {
+    const w = i.w || 0, h = i.h || 0;
+    minX = Math.min(minX, i.x - (i.kind === 'union' ? 20 : 0));
+    maxX = Math.max(maxX, i.x + (i.kind === 'union' ? 20 : w));
+    minY = Math.min(minY, i.y - (i.kind === 'union' ? 14 : 0));
+    maxY = Math.max(maxY, i.y + (i.kind === 'union' ? 8 : h));
+  });
+  if (!isFinite(minX)) return null;
+  const dx = M - minX, dy = M - minY;
+  shiftBlock(chart, dx, dy);
+  chart.width = (maxX - minX) + M * 2;
+  chart.height = (maxY - minY) + M * 2;
+  chart.focusCx = focusCx + dx;
+  chart.focusId = fid;
+  return chart;
+}
+
+/* ─── chart rendering ─────────────────────────────────────────────────── */
+let view = { x: 0, y: 0, k: 1 };
+let CHART = null;
+
+function trunc(s, px, fs) {
+  s = String(s == null ? '' : s);
+  const max = Math.floor(px / (fs * 0.53));
+  return s.length > max ? s.slice(0, Math.max(1, max - 1)) + '…' : s;
+}
+function pathOf(pts) { return pts.map((p, i) => (i ? 'L' : 'M') + Math.round(p[0] * 10) / 10 + ' ' + Math.round(p[1] * 10) / 10).join(' '); }
+function sexColor(p) { return p && p.sex === 'M' ? 'var(--male)' : p && p.sex === 'F' ? 'var(--female)' : 'var(--neutral)'; }
+
+function renderChart(keepView) {
+  const svg = $('#chart'), vp = $('#viewport');
+  CHART = buildChart();
+  $('#stage-empty').classList.toggle('hidden', !!CHART);
+  if (!CHART) { vp.innerHTML = ''; return; }
+
+  const gens = {};
+  CHART.items.forEach(i => { if (i.kind === 'card') gens[Math.round(i.y)] = true; });
+  const rows = Object.keys(gens).map(Number).sort((a, b) => a - b);
+  const focusY = CHART.items.filter(i => i.kind === 'card' && i.id === CHART.focusId).map(i => i.y)[0] || 0;
+
+  let out = '';
+  // generation bands
+  rows.forEach((y, i) => {
+    if (i % 2) out += '<rect class="gen-band" x="0" y="' + (y - 16) + '" width="' + CHART.width + '" height="' + (CARD_H + 32) + '" rx="10"/>';
+    out += '<text class="gen-label" x="10" y="' + (y - 18) + '">' + esc(genLabel(Math.round((focusY - y) / ROW))) + '</text>';
+  });
+  CHART.links.forEach(l => { out += '<path class="' + l.cls.replace('dashed', '') + '" ' + (/dashed/.test(l.cls) ? 'stroke-dasharray="5 4" ' : '') + 'd="' + pathOf(l.pts) + '"/>'; });
+  CHART.items.forEach((i, n) => {
+    if (i.kind === 'union') {
+      out += '<circle class="udot" cx="' + i.x + '" cy="' + i.y + '" r="4"/>';
+      if (i.label) out += '<text class="uyr" x="' + i.x + '" y="' + (i.y - 8) + '">' + esc(i.label) + '</text>';
+    } else if (i.kind === 'ghost') {
+      out += '<g class="node ghost" data-ghost="' + esc(i.target) + '" transform="translate(' + i.x + ',' + i.y + ')">'
+           + '<rect class="card-bg" width="' + i.w + '" height="' + i.h + '" rx="9"/>'
+           + '<text x="' + (i.w / 2) + '" y="' + (i.h / 2 + 4) + '" text-anchor="middle">+  Add parents</text></g>';
+    } else {
+      out += nodeSVG(i, n);
+    }
+  });
+  vp.innerHTML = out;
+
+  if (!keepView) fitView();
+  else applyView();
+}
+function genLabel(g) {
+  const up = ['This generation', 'Parents', 'Grandparents', 'Great-grandparents', '2× great-grandparents', '3× great-grandparents', '4× great-grandparents', '5× great-grandparents', '6× great-grandparents', '7× great-grandparents'];
+  const dn = ['This generation', 'Children', 'Grandchildren', 'Great-grandchildren', '2× great-grandchildren', '3× great-grandchildren', '4× great-grandchildren', '5× great-grandchildren'];
+  return g >= 0 ? (up[g] || (g + ' generations up')) : (dn[-g] || (-g + ' generations down'));
+}
+function nodeSVG(i, n) {
+  const p = P(i.id); if (!p) return '';
+  const cls = ['node'];
+  if (i.id === sel) cls.push('sel');
+  if (i.id === CHART.focusId) cls.push('focus');
+  const cid = 'cp' + n;
+  const life = lifespan(p);
+  const dead = isDeceased(p);
+  let extra = p.birth.place || p.occupation || '';
+  if (i.sib === 'half') extra = 'half-sibling' + (extra ? ' · ' + extra : '');
+  let g = '<g class="' + cls.join(' ') + '" data-id="' + esc(i.id) + '" transform="translate(' + i.x + ',' + i.y + ')">'
+        + '<rect class="card-bg" width="' + CARD_W + '" height="' + CARD_H + '" rx="11"/>'
+        + '<rect x="1.5" y="1.5" width="5" height="' + (CARD_H - 3) + '" rx="2.5" fill="' + sexColor(p) + '"/>';
+  if (p.photo) {
+    g += '<clipPath id="' + cid + '"><circle cx="38" cy="39" r="22"/></clipPath>'
+       + '<image href="' + esc(p.photo) + '" x="16" y="17" width="44" height="44" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + cid + ')"/>'
+       + '<circle cx="38" cy="39" r="22" fill="none" stroke="' + sexColor(p) + '" stroke-width="1.5" opacity=".55"/>';
+  } else {
+    g += '<circle cx="38" cy="39" r="22" fill="' + sexColor(p) + '" opacity=".92"/>'
+       + '<text class="ini" x="38" y="44">' + esc(initials(p)) + '</text>';
+  }
+  g += '<text class="nm" x="70" y="30">' + esc(trunc(fullName(p), 132, 13)) + '</text>'
+     + '<text class="dt" x="70" y="48">' + esc((dead ? '† ' : '') + trunc(life || '—', 128, 11)) + '</text>'
+     + (extra ? '<text class="xt" x="70" y="63">' + esc(trunc(extra, 138, 10)) + '</text>' : '')
+     + '</g>';
+  return g;
+}
+
+/* ─── pan / zoom ──────────────────────────────────────────────────────── */
+function applyView() { $('#viewport').setAttribute('transform', 'translate(' + view.x + ',' + view.y + ') scale(' + view.k + ')'); }
+function stageSize() { const r = $('#stage').getBoundingClientRect(); return { w: r.width, h: r.height }; }
+function fitView() {
+  if (!CHART) return;
+  const s = stageSize();
+  const k = clamp(Math.min(s.w / CHART.width, s.h / CHART.height), 0.12, 1.15);
+  view.k = k;
+  view.x = (s.w - CHART.width * k) / 2;
+  view.y = (s.h - CHART.height * k) / 2;
+  applyView();
+}
+function centreOn(id, k) {
+  if (!CHART) return;
+  const it = CHART.items.filter(i => i.kind === 'card' && i.id === id)[0];
+  if (!it) return fitView();
+  const s = stageSize();
+  view.k = k || clamp(view.k, 0.5, 1.1);
+  view.x = s.w / 2 - (it.x + CARD_W / 2) * view.k;
+  view.y = s.h / 2 - (it.y + CARD_H / 2) * view.k;
+  applyView();
+}
+function zoomBy(f, cx, cy) {
+  const s = stageSize();
+  cx = cx == null ? s.w / 2 : cx; cy = cy == null ? s.h / 2 : cy;
+  const k2 = clamp(view.k * f, 0.08, 3);
+  view.x = cx - (cx - view.x) * (k2 / view.k);
+  view.y = cy - (cy - view.y) * (k2 / view.k);
+  view.k = k2; applyView();
+}
+
+/* ─── path helpers for bound fields ───────────────────────────────────── */
+function getPath(o, path) { return path.split('.').reduce((a, k) => (a == null ? a : a[k]), o); }
+function setPath(o, path, v) {
+  const ks = path.split('.'); const last = ks.pop();
+  const t = ks.reduce((a, k) => (a[k] = a[k] || {}), o);
+  t[last] = v;
+}
+
+/* ─── detail panel ────────────────────────────────────────────────────── */
+let dTab = 'facts';
+const SEXES = [['M', 'Male'], ['F', 'Female'], ['X', 'Other / non-binary'], ['U', 'Unknown']];
+const STATUSES = [['married', 'Married'], ['partners', 'Partners'], ['engaged', 'Engaged'], ['divorced', 'Divorced'], ['separated', 'Separated'], ['widowed', 'Widowed'], ['unknown', 'Unknown']];
+const CHILD_RELS = [['birth', 'Birth'], ['adopted', 'Adopted'], ['step', 'Step'], ['foster', 'Foster'], ['guardian', 'Ward']];
+const EVENT_TYPES = ['Baptism', 'Christening', 'Confirmation', 'Bar/Bat Mitzvah', 'Graduation', 'Military service', 'Immigration', 'Emigration', 'Naturalisation', 'Residence', 'Census', 'Occupation', 'Retirement', 'Burial', 'Cremation', 'Probate', 'Other'];
+
+function renderDetail() {
+  const d = $('#detail');
+  const p = P(sel);
+  if (!p) { d.classList.add('hidden'); return; }
+  d.classList.remove('hidden');
+  const body = $('.dbody', d), keepScroll = body.scrollTop;
+
+  $('#d-avatar').outerHTML = avatarHTML(p, 'lg').replace('class="avatar', 'id="d-avatar" class="avatar');
+  $('#d-name').textContent = displayName(p);
+  const bits = [];
+  const ls = lifespan(p); if (ls) bits.push(ls);
+  const age = ageOf(p); if (age != null && age >= 0 && age < 130) bits.push(isDeceased(p) ? 'died aged ' + age : 'age ' + age);
+  if (p.occupation) bits.push(p.occupation);
+  $('#d-sub').textContent = bits.join(' · ');
+
+  $$('.dtab', d).forEach(b => b.classList.toggle('on', b.dataset.dtab === dTab));
+  $$('.dpane', d).forEach(b => b.classList.toggle('on', b.id === 'dp-' + dTab));
+
+  if (dTab === 'facts')  $('#dp-facts').innerHTML  = factsHTML(p);
+  if (dTab === 'family') $('#dp-family').innerHTML = familyHTML(p);
+  if (dTab === 'events') $('#dp-events').innerHTML = eventsHTML(p);
+  if (dTab === 'notes')  $('#dp-notes').innerHTML  = notesHTML(p);
+  body.scrollTop = keepScroll;
+}
+function fld(label, path, val, ph, type) {
+  return '<div class="fw"><label class="fl">' + esc(label) + '</label>'
+       + '<input class="field" type="' + (type || 'text') + '" data-path="' + path + '" value="' + esc(val || '') + '" placeholder="' + esc(ph || '') + '"></div>';
+}
+function sel_(label, path, val, opts) {
+  return '<div class="fw"><label class="fl">' + esc(label) + '</label><select class="field" data-path="' + path + '">'
+       + opts.map(o => '<option value="' + esc(o[0]) + '"' + (o[0] === val ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('')
+       + '</select></div>';
+}
+function factsHTML(p) {
+  const dead = isDeceased(p);
+  return '<div class="grp"><div class="grp-h">Name</div>'
+    + '<div class="f2">' + fld('First / given names', 'given', p.given, 'Marie Claire') + fld('Last / family name', 'surname', p.surname, 'Tremblay') + '</div>'
+    + '<div class="f2">' + fld('Name at birth (née)', 'birthSurname', p.birthSurname, 'if different') + fld('Nickname', 'nickname', p.nickname, '') + '</div>'
+    + '<div class="f2">' + fld('Suffix', 'suffix', p.suffix, 'Jr., III') + sel_('Sex', 'sex', p.sex, SEXES) + '</div></div>'
+
+    + '<div class="grp"><div class="grp-h">Birth</div>'
+    + fld('Date', 'birth.date', p.birth.date, 'e.g. 12 Mar 1890, 1890-03-12, abt 1890')
+    + fld('Place', 'birth.place', p.birth.place, 'Montreal, Quebec, Canada')
+    + '<div class="hint">Partial and approximate dates are fine — <em>1890</em>, <em>Mar 1890</em>, <em>abt 1890</em>, <em>bef 1890</em>.</div></div>'
+
+    + '<div class="grp"><div class="grp-h">Life status</div>'
+    + '<label class="chk"><input type="checkbox" data-path="living" ' + (p.living ? 'checked' : '') + '> Living</label>'
+    + (dead ? '<div style="margin-top:6px">' + fld('Death date', 'death.date', p.death.date, '')
+        + fld('Death place', 'death.place', p.death.place, '')
+        + fld('Cause', 'death.cause', p.death.cause, 'optional') + '</div>' : '')
+    + '</div>'
+
+    + '<div class="grp"><div class="grp-h">Life details</div>'
+    + fld('Occupation', 'occupation', p.occupation, 'Carpenter')
+    + fld('Religion', 'religion', p.religion, '')
+    + '</div>'
+
+    + '<div class="grp"><div class="grp-h">Tags</div><div id="tagbox">'
+    + (p.tags || []).map(t => '<span class="tag-chip">' + esc(t) + '<button data-untag="' + esc(t) + '" title="Remove"><svg><use href="#i-x"/></svg></button></span>').join('')
+    + '</div><input class="field" id="tag-in" placeholder="Add a tag and press Enter" style="margin-top:6px"></div>';
+}
+function personRow(id, tagText, actions) {
+  const p = P(id);
+  return '<div class="relrow">' + avatarHTML(p) +
+    '<div class="pitem-txt" data-goto="' + esc(id) + '">' +
+      '<div class="pitem-name">' + esc(fullName(p)) + '</div>' +
+      '<div class="pitem-sub">' + esc(lifespan(p) || 'no dates') + '</div></div>' +
+    (tagText ? '<span class="tag">' + esc(tagText) + '</span>' : '') + (actions || '') + '</div>';
+}
+const xBtn = attrs => '<button class="x" ' + attrs + ' title="Unlink"><svg><use href="#i-x"/></svg></button>';
+
+function familyHTML(p) {
+  let h = '';
+  // Parents
+  const pf = famcOf(p.id);
+  h += '<div class="grp"><div class="grp-h">Parents</div>';
+  if (!pf.length) h += '<div class="hint" style="margin-bottom:6px">No parents recorded.</div>';
+  pf.forEach(f => {
+    f.partners.filter(Boolean).forEach(par => {
+      h += personRow(par, relOfChild(f, p.id) === 'birth' ? (P(par).sex === 'F' ? 'mother' : P(par).sex === 'M' ? 'father' : 'parent') : relOfChild(f, p.id),
+        xBtn('data-unparent="' + f.id + '|' + par + '"'));
+    });
+    if (f.partners.filter(Boolean).length === 1)
+      h += '<button class="addbtn" data-addparent2="' + f.id + '" style="margin-bottom:6px"><svg><use href="#i-plus"/></svg>Add the other parent</button>';
+    h += '<div class="fw"><label class="fl">Relationship to these parents</label><select class="field" data-childrel="' + f.id + '">'
+      + CHILD_RELS.map(r => '<option value="' + r[0] + '"' + (r[0] === relOfChild(f, p.id) ? ' selected' : '') + '>' + r[1] + '</option>').join('') + '</select></div>';
+  });
+  h += '<button class="addbtn" data-addparent="1"><svg><use href="#i-plus"/></svg>Add a parent</button></div>';
+
+  // Partners & their children
+  h += '<div class="grp"><div class="grp-h">Partners &amp; children</div>';
+  const fs = famsOf(p.id);
+  if (!fs.length) h += '<div class="hint" style="margin-bottom:6px">No partners or children recorded.</div>';
+  fs.forEach(f => {
+    const sp = otherPartner(f, p.id);
+    h += '<div style="border:1px solid var(--line-2);border-radius:var(--radius);padding:9px;margin-bottom:9px">';
+    if (sp && P(sp)) h += personRow(sp, null, xBtn('data-unpartner="' + f.id + '"'));
+    else h += '<button class="addbtn" data-addpartner2="' + f.id + '" style="margin-bottom:7px"><svg><use href="#i-plus"/></svg>Add a partner to this union</button>';
+    h += '<div class="f2">'
+      + '<div class="fw"><label class="fl">Status</label><select class="field" data-fam="' + f.id + '" data-fampath="status">'
+      + STATUSES.map(s => '<option value="' + s[0] + '"' + (s[0] === f.status ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select></div>'
+      + '<div class="fw"><label class="fl">Married</label><input class="field" data-fam="' + f.id + '" data-fampath="marriage.date" value="' + esc(f.marriage.date) + '" placeholder="date"></div>'
+      + '</div>'
+      + '<div class="fw"><label class="fl">Marriage place</label><input class="field" data-fam="' + f.id + '" data-fampath="marriage.place" value="' + esc(f.marriage.place) + '" placeholder="optional"></div>'
+      + (f.status === 'divorced' || f.status === 'separated'
+        ? '<div class="fw"><label class="fl">Separated / divorced</label><input class="field" data-fam="' + f.id + '" data-fampath="divorce.date" value="' + esc(f.divorce.date) + '" placeholder="date"></div>' : '');
+    h += '<div class="grp-h" style="margin-top:4px">Children</div>';
+    f.children.filter(c => P(c.id)).forEach(c => {
+      h += personRow(c.id, c.rel === 'birth' ? null : c.rel, xBtn('data-unkid="' + f.id + '|' + c.id + '"'));
+    });
+    h += '<button class="addbtn" data-addchild="' + f.id + '"><svg><use href="#i-plus"/></svg>Add a child</button>';
+    h += '</div>';
+  });
+  h += '<button class="addbtn" data-addpartner="1"><svg><use href="#i-heart"/></svg>Add a partner</button>';
+  h += '<button class="addbtn" data-addchild="new" style="margin-top:6px"><svg><use href="#i-plus"/></svg>Add a child</button></div>';
+
+  // Siblings
+  const sibs = siblingsOf(p.id);
+  if (sibs.length) {
+    h += '<div class="grp"><div class="grp-h">Siblings</div>';
+    sibs.forEach(s => { h += personRow(s.id, s.kind === 'half' ? 'half' : null, ''); });
+    h += '</div>';
+  }
+  return h;
+}
+function eventsHTML(p) {
+  let h = '<div class="grp"><div class="grp-h">Life timeline</div>';
+  const tl = timelineFor(p.id);
+  if (!tl.length) h += '<div class="hint">Add a birth date, or events below, to build a timeline.</div>';
+  tl.forEach(e => {
+    h += '<div class="tl-item"><div class="tl-dot"></div><div><div class="tl-y">' + esc(e.when || '—')
+      + (e.age != null ? ' · age ' + e.age : '') + '</div><div class="tl-t">' + esc(e.title) + '</div>'
+      + (e.place ? '<div class="tl-p">' + esc(e.place) + '</div>' : '') + '</div></div>';
+  });
+  h += '</div><div class="grp"><div class="grp-h">Custom events</div>';
+  (p.events || []).forEach((ev, i) => {
+    h += '<div class="evrow"><div class="top">'
+      + '<input class="field" list="ev-types" data-ev="' + i + '" data-evpath="type" value="' + esc(ev.type) + '" placeholder="Event">'
+      + '<input class="field" data-ev="' + i + '" data-evpath="date" value="' + esc(ev.date) + '" placeholder="Date" style="max-width:110px">'
+      + xBtn('data-delev="' + i + '"') + '</div>'
+      + '<input class="field" data-ev="' + i + '" data-evpath="place" value="' + esc(ev.place) + '" placeholder="Place" style="height:30px;font-size:12.5px;margin-bottom:6px">'
+      + '<input class="field" data-ev="' + i + '" data-evpath="desc" value="' + esc(ev.desc || '') + '" placeholder="Description" style="height:30px;font-size:12.5px">'
+      + '</div>';
+  });
+  h += '<datalist id="ev-types">' + EVENT_TYPES.map(t => '<option value="' + esc(t) + '">').join('') + '</datalist>';
+  h += '<button class="addbtn" data-addev="1"><svg><use href="#i-plus"/></svg>Add an event</button></div>';
+  return h;
+}
+function notesHTML(p) {
+  return '<div class="grp"><div class="grp-h">Notes</div>'
+    + '<textarea class="field" data-path="notes" rows="10" placeholder="Stories, sources, anything you want to remember…">' + esc(p.notes || '') + '</textarea></div>'
+    + '<div class="grp"><div class="grp-h">Photo</div>'
+    + (p.photo ? '<img src="' + esc(p.photo) + '" style="width:100%;max-height:230px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--line)">' : '<div class="hint">No photo yet.</div>')
+    + '<div style="display:flex;gap:7px;margin-top:8px"><button class="btn" id="np-photo"><svg><use href="#i-img"/></svg>' + (p.photo ? 'Replace' : 'Add photo') + '</button>'
+    + (p.photo ? '<button class="btn dgr" id="np-photo-x">Remove</button>' : '') + '</div></div>'
+    + '<div class="grp"><div class="grp-h">Record</div><div class="hint">Added ' + new Date(p.added || Date.now()).toLocaleDateString()
+    + '<br>Internal id <code>' + esc(p.id) + '</code></div></div>';
+}
+/** Merged personal + family events, chronologically. */
+function timelineFor(id) {
+  const p = P(id); if (!p) return [];
+  const out = [];
+  const push = (date, title, place) => {
+    let age = date && p.birth.date ? yearsBetween(p.birth.date, date) : null;
+    if (age != null && (age < 0 || age > 125)) age = null;
+    out.push({ k: dateKey(date), when: date ? fmtDate(date) : '', title: title, place: place || '', age: age });
+  };
+  if (p.birth.date || p.birth.place) push(p.birth.date, 'Born', p.birth.place);
+  siblingsOf(id).forEach(s => { const sp = P(s.id); if (sp && sp.birth.date) push(sp.birth.date, (s.kind === 'half' ? 'Half-s' : 'S') + 'ibling ' + fullName(sp) + ' born', ''); });
+  famsOf(id).forEach(f => {
+    const sp = otherPartner(f, id);
+    const who = sp && P(sp) ? fullName(P(sp)) : 'partner';
+    if (f.marriage.date || f.marriage.place) push(f.marriage.date, 'Married ' + who, f.marriage.place);
+    if (f.divorce.date) push(f.divorce.date, (f.status === 'separated' ? 'Separated from ' : 'Divorced ') + who, '');
+    f.children.forEach(c => { const k = P(c.id); if (k && k.birth.date) push(k.birth.date, (c.rel === 'birth' ? 'Child ' : c.rel + ' child ') + fullName(k) + ' born', k.birth.place); });
+  });
+  (p.events || []).forEach(e => { if (e.type || e.date) push(e.date, e.type || 'Event', e.place || e.desc); });
+  parentsOf(id).forEach(par => { const q = P(par); if (q && q.death.date) push(q.death.date, (q.sex === 'F' ? 'Mother' : q.sex === 'M' ? 'Father' : 'Parent') + ' ' + fullName(q) + ' died', ''); });
+  if (p.death.date || p.death.place || (!p.living && !p.death.date)) push(p.death.date, 'Died' + (p.death.cause ? ' — ' + p.death.cause : ''), p.death.place);
+  out.sort((a, b) => (a.k == null ? 1 : b.k == null ? -1 : a.k - b.k));
+  return out;
+}
+
+/* ─── people list ─────────────────────────────────────────────────────── */
+function renderList() {
+  const q = ($('#q').value || '').trim().toLowerCase();
+  const show = $('#f-show').value, how = $('#f-sort').value;
+  let list = allPeople();
+  if (show === 'living') list = list.filter(p => !isDeceased(p));
+  if (show === 'deceased') list = list.filter(isDeceased);
+  if (show === 'orphan') list = list.filter(p => !famsOf(p.id).length && !famcOf(p.id).length);
+  if (q) list = list.filter(p => (fullName(p) + ' ' + p.birthSurname + ' ' + p.nickname + ' ' + p.birth.place + ' ' + p.occupation + ' ' + (p.tags || []).join(' ')).toLowerCase().indexOf(q) >= 0);
+  list = sortPeople(list, how);
+  const box = $('#plist');
+  if (!list.length) {
+    box.innerHTML = '<div class="empty"><strong>' + (allPeople().length ? 'No matches' : 'No one here yet') + '</strong>'
+      + (allPeople().length ? 'Try a different search.' : 'Add your first person to begin.') + '</div>';
+    return;
+  }
+  box.innerHTML = list.map(p =>
+    '<button class="pitem' + (p.id === sel ? ' on' : '') + '" data-id="' + esc(p.id) + '">' + avatarHTML(p)
+    + '<span class="pitem-txt"><span class="pitem-name">' + esc(fullName(p)) + (p.id === T.focus ? ' ★' : '') + '</span>'
+    + '<span class="pitem-sub">' + esc([lifespan(p), p.birth.place].filter(Boolean).join(' · ') || 'no dates') + '</span></span></button>'
+  ).join('');
+}
+
+/* ─── consistency checks ──────────────────────────────────────────────── */
+function runChecks() {
+  const out = [];
+  const add = (lvl, id, title, desc) => out.push({ lvl: lvl, id: id, title: title, desc: desc });
+  allPeople().forEach(p => {
+    const b = parseDate(p.birth.date), d = parseDate(p.death.date);
+    if (!p.given && !p.surname) add('warn', p.id, 'Unnamed person', 'This record has no name yet.');
+    if (b && d && dateKey(p.death.date) < dateKey(p.birth.date)) add('err', p.id, 'Death before birth', fullName(p) + ' — ' + fmtDate(p.birth.date) + ' → ' + fmtDate(p.death.date) + '.');
+    if (b && b.y > THIS_YEAR) add('err', p.id, 'Birth in the future', fullName(p) + ' is recorded as born in ' + b.y + '.');
+    const age = ageOf(p);
+    if (age != null && age > 122) add('warn', p.id, 'Implausible age', fullName(p) + ' would be ' + age + ' years old.');
+    if (!isDeceased(p) && b && THIS_YEAR - b.y > 110) add('warn', p.id, 'Very old and still living', fullName(p) + ' was born in ' + b.y + ' and is marked living.');
+    if (p.death.date && p.living) add('info', p.id, 'Marked living with a death date', fullName(p) + ' has a death date but the Living box is ticked.');
+    parentsOf(p.id).forEach(par => {
+      const q = P(par); if (!q) return;
+      const gap = yearsBetween(q.birth.date, p.birth.date);
+      if (gap != null && gap < 12) add('err', p.id, 'Parent too young', fullName(q) + ' would have been ' + gap + ' at the birth of ' + fullName(p) + '.');
+      if (gap != null && gap > 70) add('warn', p.id, 'Very large parent gap', fullName(q) + ' would have been ' + gap + ' at the birth of ' + fullName(p) + '.');
+      const after = yearsBetween(q.death.date, p.birth.date);
+      if (after != null && after > (q.sex === 'M' ? 1 : 0)) add('err', p.id, 'Born after a parent died', fullName(p) + ' was born ' + after + ' year(s) after ' + fullName(q) + ' died.');
+    });
+    if (parentsOf(p.id).some(par => isAncestorOf(p.id, par, new Set()))) add('err', p.id, 'Circular lineage', fullName(p) + ' appears as their own ancestor.');
+    famsOf(p.id).forEach(f => {
+      const m = yearsBetween(p.birth.date, f.marriage.date);
+      if (m != null && m < 12 && f.marriage.date) add('warn', p.id, 'Married very young', fullName(p) + ' would have been ' + m + ' at marriage.');
+      if (f.marriage.date && p.death.date && dateKey(f.marriage.date) > dateKey(p.death.date)) add('err', p.id, 'Married after death', fullName(p) + ' has a marriage dated after their death.');
+    });
+  });
+  // duplicates
+  const byName = {};
+  allPeople().forEach(p => {
+    const k = (fullName(p) + '|' + (yearOf(p.birth.date) || '')).toLowerCase();
+    if (!p.given && !p.surname) return;
+    (byName[k] = byName[k] || []).push(p);
+  });
+  Object.keys(byName).forEach(k => { if (byName[k].length > 1) add('info', byName[k][0].id, 'Possible duplicate', byName[k].length + ' people named ' + fullName(byName[k][0]) + ' with the same birth year.'); });
+  // disconnected islands
+  const comp = components();
+  if (comp.length > 1) {
+    comp.slice(1).forEach(c => add('info', c[0], 'Disconnected group', c.length + ' ' + (c.length === 1 ? 'person is' : 'people are') + ' not linked to the main tree (starting with ' + fullName(P(c[0])) + ').'));
+  }
+  const order = { err: 0, warn: 1, info: 2 };
+  out.sort((a, b) => order[a.lvl] - order[b.lvl]);
+  return out;
+}
+/** Connected components over the whole kinship graph, largest first. */
+function components() {
+  const seen = new Set(), out = [];
+  allPeople().forEach(p => {
+    if (seen.has(p.id)) return;
+    const stack = [p.id], group = [];
+    while (stack.length) {
+      const cur = stack.pop();
+      if (seen.has(cur)) continue;
+      seen.add(cur); group.push(cur);
+      parentsOf(cur).concat(childrenOf(cur), partnersOf(cur), siblingsOf(cur).map(s => s.id))
+        .forEach(n => { if (!seen.has(n)) stack.push(n); });
+    }
+    out.push(group);
+  });
+  return out.sort((a, b) => b.length - a.length);
+}
+function renderChecks() {
+  const issues = runChecks();
+  const box = $('#pane-checks');
+  const counts = { err: 0, warn: 0, info: 0 };
+  issues.forEach(i => counts[i.lvl]++);
+  let h = '<div class="f3" style="margin-bottom:12px">'
+    + '<div class="stat"><div class="n" style="color:var(--danger)">' + counts.err + '</div><div class="l">Errors</div></div>'
+    + '<div class="stat"><div class="n" style="color:var(--warn)">' + counts.warn + '</div><div class="l">Warnings</div></div>'
+    + '<div class="stat"><div class="n" style="color:var(--accent)">' + counts.info + '</div><div class="l">Notes</div></div></div>';
+  if (!issues.length) h += '<div class="empty"><strong>All clear</strong>No inconsistencies found in this tree.</div>';
+  issues.slice(0, 200).forEach(i => {
+    h += '<button class="issue ' + i.lvl + '" data-id="' + esc(i.id) + '"><span class="dot"></span><span><span class="t">' + esc(i.title) + '</span><span class="d">' + esc(i.desc) + '</span></span></button>';
+  });
+  box.innerHTML = h;
+}
+
+/* ─── statistics ──────────────────────────────────────────────────────── */
+function renderStats() {
+  const ppl = allPeople(), n = ppl.length;
+  const box = $('#pane-stats');
+  if (!n) { box.innerHTML = '<div class="empty"><strong>No data yet</strong>Statistics appear once you add people.</div>'; return; }
+  const male = ppl.filter(p => p.sex === 'M').length, female = ppl.filter(p => p.sex === 'F').length;
+  const dead = ppl.filter(isDeceased), living = n - dead.length;
+  const spans = dead.map(p => yearsBetween(p.birth.date, p.death.date)).filter(v => v != null && v >= 0 && v < 122);
+  const avg = spans.length ? Math.round(spans.reduce((a, b) => a + b, 0) / spans.length) : null;
+  const oldest = dead.map(p => ({ p: p, a: yearsBetween(p.birth.date, p.death.date) })).filter(o => o.a != null && o.a < 122).sort((a, b) => b.a - a.a)[0];
+  const gens = maxGenerations();
+  const surnames = {};
+  ppl.forEach(p => { const s = (p.surname || '').trim(); if (s) surnames[s] = (surnames[s] || 0) + 1; });
+  const topSur = Object.keys(surnames).map(k => [k, surnames[k]]).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const decades = {};
+  ppl.forEach(p => { const y = yearOf(p.birth.date); if (y) { const d = Math.floor(y / 10) * 10; decades[d] = (decades[d] || 0) + 1; } });
+  const dks = Object.keys(decades).map(Number).sort((a, b) => a - b);
+  const places = {};
+  ppl.forEach(p => { const s = (p.birth.place || '').split(',').pop().trim(); if (s) places[s] = (places[s] || 0) + 1; });
+  const topPlaces = Object.keys(places).map(k => [k, places[k]]).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const kidCounts = Object.keys(T.families).map(f => T.families[f].children.length);
+  const avgKids = kidCounts.length ? (kidCounts.reduce((a, b) => a + b, 0) / kidCounts.length).toFixed(1) : '0';
+
+  const bar = (rows, max) => '<div class="bars">' + rows.map(r =>
+    '<div class="bar"><span class="bl" title="' + esc(r[0]) + '">' + esc(r[0]) + '</span><span class="bt"><span class="bf" style="width:' + Math.round(r[1] / max * 100) + '%"></span></span><span class="bv">' + r[1] + '</span></div>').join('') + '</div>';
+
+  let h = '<div class="f2" style="margin-bottom:8px">'
+    + '<div class="stat"><div class="n">' + n + '</div><div class="l">People</div></div>'
+    + '<div class="stat"><div class="n">' + Object.keys(T.families).length + '</div><div class="l">Unions</div></div></div>'
+    + '<div class="f2" style="margin-bottom:8px">'
+    + '<div class="stat"><div class="n">' + gens + '</div><div class="l">Generations</div></div>'
+    + '<div class="stat"><div class="n">' + (avg != null ? avg : '—') + '</div><div class="l">Avg lifespan</div></div></div>'
+    + '<div class="f2" style="margin-bottom:14px">'
+    + '<div class="stat"><div class="n">' + living + '</div><div class="l">Living</div></div>'
+    + '<div class="stat"><div class="n">' + avgKids + '</div><div class="l">Children / union</div></div></div>';
+
+  h += '<div class="grp"><div class="grp-h">Sex</div>' + bar([['Male', male], ['Female', female], ['Other / unknown', n - male - female]], Math.max(1, n)) + '</div>';
+  if (topSur.length) h += '<div class="grp"><div class="grp-h">Most common surnames</div>' + bar(topSur, topSur[0][1]) + '</div>';
+  if (dks.length) h += '<div class="grp"><div class="grp-h">Births by decade</div>' + bar(dks.map(d => [d + 's', decades[d]]), Math.max.apply(null, dks.map(d => decades[d]))) + '</div>';
+  if (topPlaces.length) h += '<div class="grp"><div class="grp-h">Birth places</div>' + bar(topPlaces, topPlaces[0][1]) + '</div>';
+  if (oldest) h += '<div class="grp"><div class="grp-h">Longest life</div><div class="hint">' + esc(fullName(oldest.p)) + ' — ' + oldest.a + ' years (' + esc(lifespan(oldest.p)) + ')</div></div>';
+  box.innerHTML = h;
+}
+function maxGenerations() {
+  const roots = allPeople().filter(p => !parentsOf(p.id).length).map(p => p.id);
+  let best = 0;
+  const depth = (id, seen) => {
+    if (seen.has(id)) return 0;
+    seen.add(id);
+    const kids = childrenOf(id);
+    let m = 0;
+    kids.forEach(k => { m = Math.max(m, depth(k, seen)); });
+    seen.delete(id);
+    return 1 + m;
+  };
+  roots.forEach(r => { best = Math.max(best, depth(r, new Set())); });
+  return best || (allPeople().length ? 1 : 0);
+}
+
+/* ─── GEDCOM 5.5.1 ────────────────────────────────────────────────────────
+   Export writes the subset of tags this app models; import reads the same
+   subset plus the common variants other programs emit.
+   ──────────────────────────────────────────────────────────────────────── */
+function gedDate(raw) {
+  const p = parseDate(raw); if (!p) return raw ? String(raw).toUpperCase() : '';
+  let core = String(p.y);
+  if (p.m) core = (p.d ? p.d + ' ' : '') + MON[p.m - 1].toUpperCase() + ' ' + p.y;
+  const pre = { about: 'ABT ', before: 'BEF ', after: 'AFT ', estimated: 'EST ', calculated: 'CAL ' }[p.qual] || '';
+  return pre + core;
+}
+function gedEscape(s) { return String(s == null ? '' : s).replace(/\r/g, ''); }
+function gedLines(level, tag, value, out) {
+  if (value == null || value === '') return;
+  const parts = gedEscape(value).split('\n');
+  parts.forEach((line, i) => {
+    if (i === 0) out.push(level + ' ' + tag + ' ' + line);
+    else out.push((level + 1) + ' CONT ' + line);
+  });
+}
+function toGEDCOM() {
+  const out = [];
+  const iref = {}, fref = {};
+  let i = 0, f = 0;
+  Object.keys(T.people).forEach(id => { iref[id] = '@I' + (++i) + '@'; });
+  Object.keys(T.families).forEach(id => { fref[id] = '@F' + (++f) + '@'; });
+  const now = new Date();
+  out.push('0 HEAD');
+  out.push('1 SOUR KINFOLK');
+  out.push('2 NAME Kinfolk Family Tree');
+  out.push('2 VERS 1.0');
+  out.push('1 DEST ANY');
+  out.push('1 DATE ' + now.getDate() + ' ' + MON[now.getMonth()].toUpperCase() + ' ' + now.getFullYear());
+  out.push('1 FILE ' + (T.name || 'family').replace(/[^\w\- ]/g, '') + '.ged');
+  out.push('1 GEDC'); out.push('2 VERS 5.5.1'); out.push('2 FORM LINEAGE-LINKED');
+  out.push('1 CHAR UTF-8');
+  out.push('1 SUBM @SUB1@');
+  out.push('0 @SUB1@ SUBM');
+  out.push('1 NAME ' + (T.name || 'Kinfolk user'));
+
+  Object.keys(T.people).forEach(id => {
+    const p = T.people[id];
+    out.push('0 ' + iref[id] + ' INDI');
+    out.push('1 NAME ' + gedEscape(p.given) + ' /' + gedEscape(p.surname) + '/' + (p.suffix ? ' ' + gedEscape(p.suffix) : ''));
+    gedLines(2, 'GIVN', p.given, out);
+    gedLines(2, 'SURN', p.surname, out);
+    gedLines(2, 'NSFX', p.suffix, out);
+    gedLines(2, 'NICK', p.nickname, out);
+    if (p.birthSurname && p.birthSurname !== p.surname) {
+      out.push('1 NAME ' + gedEscape(p.given) + ' /' + gedEscape(p.birthSurname) + '/');
+      out.push('2 TYPE birth');
+    }
+    out.push('1 SEX ' + (p.sex === 'M' || p.sex === 'F' ? p.sex : 'U'));
+    if (p.birth.date || p.birth.place) {
+      out.push('1 BIRT');
+      gedLines(2, 'DATE', gedDate(p.birth.date), out);
+      gedLines(2, 'PLAC', p.birth.place, out);
+    }
+    if (isDeceased(p)) {
+      out.push('1 DEAT');
+      gedLines(2, 'DATE', gedDate(p.death.date), out);
+      gedLines(2, 'PLAC', p.death.place, out);
+      gedLines(2, 'CAUS', p.death.cause, out);
+    }
+    gedLines(1, 'OCCU', p.occupation, out);
+    gedLines(1, 'RELI', p.religion, out);
+    (p.events || []).forEach(ev => {
+      if (!ev.type && !ev.date && !ev.place) return;
+      out.push('1 EVEN');
+      gedLines(2, 'TYPE', ev.type, out);
+      gedLines(2, 'DATE', gedDate(ev.date), out);
+      gedLines(2, 'PLAC', ev.place, out);
+      gedLines(2, 'NOTE', ev.desc, out);
+    });
+    (p.tags || []).forEach(t => gedLines(1, 'NOTE', 'Tag: ' + t, out));
+    gedLines(1, 'NOTE', p.notes, out);
+    famcOf(id).forEach(fam => {
+      out.push('1 FAMC ' + fref[fam.id]);
+      const r = relOfChild(fam, id);
+      if (r && r !== 'birth') out.push('2 PEDI ' + (r === 'step' ? 'step' : r === 'foster' ? 'foster' : r === 'adopted' ? 'adopted' : 'sealing'));
+    });
+    famsOf(id).forEach(fam => out.push('1 FAMS ' + fref[fam.id]));
+  });
+
+  Object.keys(T.families).forEach(id => {
+    const fam = T.families[id];
+    out.push('0 ' + fref[id] + ' FAM');
+    const a = fam.partners[0] ? T.people[fam.partners[0]] : null;
+    const b = fam.partners[1] ? T.people[fam.partners[1]] : null;
+    // GEDCOM wants HUSB/WIFE; fall back to declaration order when sex is unknown.
+    let husb = null, wife = null;
+    if (a && a.sex === 'F') wife = a; else if (a) husb = a;
+    if (b && b.sex === 'F' && !wife) wife = b; else if (b && !husb) husb = b; else if (b && !wife) wife = b;
+    if (husb) out.push('1 HUSB ' + iref[husb.id]);
+    if (wife) out.push('1 WIFE ' + iref[wife.id]);
+    fam.children.forEach(c => { if (iref[c.id]) out.push('1 CHIL ' + iref[c.id]); });
+    if (fam.marriage.date || fam.marriage.place || fam.status === 'married') {
+      out.push('1 MARR');
+      gedLines(2, 'DATE', gedDate(fam.marriage.date), out);
+      gedLines(2, 'PLAC', fam.marriage.place, out);
+    }
+    if (fam.status === 'divorced') { out.push('1 DIV'); gedLines(2, 'DATE', gedDate(fam.divorce.date), out); }
+    if (fam.status === 'separated' && fam.divorce.date) { out.push('1 EVEN'); out.push('2 TYPE Separation'); gedLines(2, 'DATE', gedDate(fam.divorce.date), out); }
+    gedLines(1, 'NOTE', fam.notes, out);
+  });
+  out.push('0 TRLR');
+  return out.join('\n') + '\n';
+}
+
+function parseGEDCOM(text) {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  const records = [];
+  let cur = null;
+  const stack = [];
+  lines.forEach(raw => {
+    const line = raw.replace(/^﻿/, '').trimRight();
+    if (!line.trim()) return;
+    const m = line.match(/^\s*(\d+)\s+(?:(@[^@]*@)\s+)?([A-Za-z0-9_]+)(?:\s(.*))?$/);
+    if (!m) return;
+    const level = +m[1], xref = m[2] || null, tag = m[3].toUpperCase(), val = m[4] == null ? '' : m[4];
+    const node = { tag: tag, xref: xref, val: val, kids: [] };
+    if (level === 0) { cur = node; records.push(node); stack.length = 0; stack[0] = node; return; }
+    if (tag === 'CONT' || tag === 'CONC') {
+      const parent = stack[level - 1];
+      if (parent) parent.val += (tag === 'CONT' ? '\n' : '') + val;
+      return;
+    }
+    const parent = stack[level - 1];
+    if (parent) parent.kids.push(node);
+    stack[level] = node;
+    stack.length = level + 1;
+  });
+  const kid = (n, tag) => n.kids.filter(k => k.tag === tag)[0];
+  const kids = (n, tag) => n.kids.filter(k => k.tag === tag);
+  const sub = (n, tag) => { const k = kid(n, tag); return k ? k.val.trim() : ''; };
+
+  const tree = blankTree('Imported tree');
+  const map = {}, fmap = {};
+  records.filter(r => r.tag === 'INDI').forEach(r => {
+    const p = blankPerson();
+    const nameNode = kid(r, 'NAME');
+    if (nameNode) {
+      const nm = nameNode.val || '';
+      const mm = nm.match(/^(.*?)\/([^/]*)\/(.*)$/);
+      if (mm) { p.given = mm[1].trim(); p.surname = mm[2].trim(); p.suffix = mm[3].trim(); }
+      else p.given = nm.trim();
+      p.given = sub(nameNode, 'GIVN') || p.given;
+      p.surname = sub(nameNode, 'SURN') || p.surname;
+      p.suffix = sub(nameNode, 'NSFX') || p.suffix;
+      p.nickname = sub(nameNode, 'NICK') || p.nickname;
+    }
+    kids(r, 'NAME').slice(1).forEach(nn => {
+      if ((sub(nn, 'TYPE') || '').toLowerCase() === 'birth') {
+        const mm = (nn.val || '').match(/\/([^/]*)\//);
+        if (mm) p.birthSurname = mm[1].trim();
+      }
+    });
+    const sx = (sub(r, 'SEX') || 'U').toUpperCase();
+    p.sex = sx === 'M' || sx === 'F' ? sx : (sx === 'X' ? 'X' : 'U');
+    const b = kid(r, 'BIRT') || kid(r, 'CHR');
+    if (b) { p.birth.date = sub(b, 'DATE'); p.birth.place = sub(b, 'PLAC'); }
+    const d = kid(r, 'DEAT');
+    if (d) { p.living = false; p.death.date = sub(d, 'DATE'); p.death.place = sub(d, 'PLAC'); p.death.cause = sub(d, 'CAUS'); }
+    const bur = kid(r, 'BURI');
+    if (bur) { p.living = false; p.events.push({ type: 'Burial', date: sub(bur, 'DATE'), place: sub(bur, 'PLAC'), desc: '' }); }
+    p.occupation = sub(r, 'OCCU');
+    p.religion = sub(r, 'RELI');
+    const notes = kids(r, 'NOTE').map(nn => nn.val).filter(Boolean);
+    notes.forEach(nv => { const t = nv.match(/^Tag:\s*(.+)$/); if (t) p.tags.push(t[1].trim()); });
+    p.notes = notes.filter(nv => !/^Tag:\s/.test(nv)).join('\n\n');
+    kids(r, 'EVEN').forEach(ev => p.events.push({ type: sub(ev, 'TYPE') || 'Event', date: sub(ev, 'DATE'), place: sub(ev, 'PLAC'), desc: sub(ev, 'NOTE') }));
+    ['BAPM', 'CHRA', 'CONF', 'GRAD', 'IMMI', 'EMIG', 'NATU', 'RESI', 'CENS', 'RETI', 'PROB'].forEach(tag => {
+      kids(r, tag).forEach(ev => p.events.push({ type: { BAPM: 'Baptism', CHRA: 'Christening', CONF: 'Confirmation', GRAD: 'Graduation', IMMI: 'Immigration', EMIG: 'Emigration', NATU: 'Naturalisation', RESI: 'Residence', CENS: 'Census', RETI: 'Retirement', PROB: 'Probate' }[tag], date: sub(ev, 'DATE'), place: sub(ev, 'PLAC'), desc: '' }));
+    });
+    if (p.death.date || p.death.place) p.living = false;
+    tree.people[p.id] = p;
+    if (r.xref) map[r.xref] = p.id;
+  });
+  records.filter(r => r.tag === 'FAM').forEach(r => {
+    const f = blankFamily();
+    const h = sub(r, 'HUSB'), w = sub(r, 'WIFE');
+    f.partners = [map[h] || null, map[w] || null];
+    const marr = kid(r, 'MARR');
+    if (marr) { f.status = 'married'; f.marriage.date = sub(marr, 'DATE'); f.marriage.place = sub(marr, 'PLAC'); }
+    else f.status = 'unknown';
+    const div = kid(r, 'DIV');
+    if (div) { f.status = 'divorced'; f.divorce.date = sub(div, 'DATE'); }
+    f.notes = kids(r, 'NOTE').map(n => n.val).join('\n\n');
+    kids(r, 'CHIL').forEach(c => { const cid = map[c.val.trim()]; if (cid) f.children.push({ id: cid, rel: 'birth' }); });
+    if (f.partners.filter(Boolean).length || f.children.length) { tree.families[f.id] = f; if (r.xref) fmap[r.xref] = f.id; }
+  });
+  // PEDI lives under the individual's FAMC pointer
+  records.filter(r => r.tag === 'INDI').forEach(r => {
+    const pid = map[r.xref]; if (!pid) return;
+    kids(r, 'FAMC').forEach(fc => {
+      const fid = fmap[(fc.val || '').trim()]; if (!fid) return;
+      const pedi = (sub(fc, 'PEDI') || '').toLowerCase();
+      const fam = tree.families[fid]; if (!fam) return;
+      if (!fam.children.some(c => c.id === pid)) fam.children.push({ id: pid, rel: 'birth' });
+      if (pedi && pedi !== 'birth') {
+        const c = fam.children.filter(c => c.id === pid)[0];
+        if (c) c.rel = pedi === 'adopted' ? 'adopted' : pedi === 'foster' ? 'foster' : pedi === 'step' ? 'step' : 'birth';
+      }
+    });
+  });
+  const head = records.filter(r => r.tag === 'HEAD')[0];
+  if (head) { const fileName = sub(head, 'FILE'); if (fileName) tree.name = fileName.replace(/\.ged(com)?$/i, ''); }
+  tree.focus = Object.keys(tree.people)[0] || null;
+  return tree;
+}
+
+/* ─── files ───────────────────────────────────────────────────────────── */
+function download(filename, text, mime) {
+  const blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 400);
+}
+const safeName = () => (T.name || 'family-tree').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'family-tree';
+
+function exportJSON() { download(safeName() + '.json', JSON.stringify(T, null, 2), 'application/json'); toast('Tree exported as JSON'); }
+function exportGED()  { download(safeName() + '.ged', toGEDCOM(), 'text/plain'); toast('Tree exported as GEDCOM'); }
+function exportCSV() {
+  const head = ['id', 'given', 'surname', 'birth_surname', 'sex', 'birth_date', 'birth_place', 'death_date', 'death_place', 'living', 'occupation', 'father', 'mother', 'partners', 'children', 'notes'];
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""').replace(/\n/g, ' ') + '"';
+  const rows = [head.join(',')];
+  allPeople().forEach(p => {
+    const par = orderedParents(p.id).map(P).filter(Boolean);
+    const father = par.filter(x => x.sex === 'M')[0], mother = par.filter(x => x.sex === 'F')[0];
+    rows.push([p.id, p.given, p.surname, p.birthSurname, p.sex, p.birth.date, p.birth.place, p.death.date, p.death.place,
+      isDeceased(p) ? 'no' : 'yes', p.occupation,
+      father ? fullName(father) : '', mother ? fullName(mother) : '',
+      partnersOf(p.id).map(id => fullName(P(id))).join('; '),
+      childrenOf(p.id).map(id => fullName(P(id))).join('; '), p.notes].map(q).join(','));
+  });
+  download(safeName() + '-people.csv', rows.join('\n'), 'text/csv');
+  toast('People exported as CSV');
+}
+/** Snapshot the current chart as a standalone SVG with computed colours baked in. */
+function chartSVGText() {
+  if (!CHART) return null;
+  const src = $('#chart');
+  const cs = getComputedStyle(document.documentElement);
+  const vars = ['--panel', '--line', '--ink', '--ink-2', '--ink-3', '--accent', '--bronze', '--male', '--female', '--neutral', '--bg'];
+  let cssVars = vars.map(v => v + ':' + cs.getPropertyValue(v).trim() + ';').join('');
+  const style = Array.prototype.slice.call(document.styleSheets)
+    .map(s => { try { return Array.prototype.slice.call(s.cssRules).map(r => r.cssText).join('\n'); } catch (e) { return ''; } }).join('\n')
+    .split('\n').filter(l => /\.node|\.lnk|\.udot|\.uyr|\.ghost|\.gen-/.test(l)).join('\n');
+  const copy = src.cloneNode(true);
+  copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  copy.setAttribute('width', Math.round(CHART.width));
+  copy.setAttribute('height', Math.round(CHART.height));
+  copy.setAttribute('viewBox', '0 0 ' + Math.round(CHART.width) + ' ' + Math.round(CHART.height));
+  copy.querySelector('#viewport').setAttribute('transform', '');
+  const st = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  st.textContent = ':root{' + cssVars + '}svg{background:' + cs.getPropertyValue('--bg').trim() + ';font-family:Inter,sans-serif}' + style;
+  copy.insertBefore(st, copy.firstChild);
+  return new XMLSerializer().serializeToString(copy);
+}
+function exportSVG() {
+  const t = chartSVGText();
+  if (!t) return toast('Nothing to export yet');
+  download(safeName() + '-chart.svg', t, 'image/svg+xml');
+  toast('Chart exported as SVG');
+}
+function exportPNG(scale) {
+  const t = chartSVGText();
+  if (!t) return toast('Nothing to export yet');
+  const img = new Image();
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t);
+  img.onload = function () {
+    const s = scale || 2;
+    const c = document.createElement('canvas');
+    c.width = Math.min(12000, Math.round(CHART.width * s));
+    c.height = Math.min(12000, Math.round(CHART.height * s));
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#fff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    c.toBlob(function (blob) {
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u; a.download = safeName() + '-chart.png';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(u); }, 400);
+      toast('Chart exported as PNG');
+    }, 'image/png');
+  };
+  img.onerror = function () { toast('Could not render the chart image — try SVG export instead.'); };
+  img.src = url;
+}
+/** Downscale a chosen photo so trees stay small enough for local storage. */
+function readPhoto(file, cb) {
+  const fr = new FileReader();
+  fr.onload = function () {
+    const img = new Image();
+    img.onload = function () {
+      const max = 320;
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = function () { toast('That image could not be read'); };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+/* ─── modal plumbing ──────────────────────────────────────────────────── */
+let modalClose = null;
+function openModal(o) {
+  $('#m-title').textContent = o.title || '';
+  const sub = $('#m-sub');
+  sub.hidden = !o.sub; sub.textContent = o.sub || '';
+  $('#m-body').innerHTML = o.body || '';
+  $('#m-foot').innerHTML = o.foot || '';
+  $('#modal').classList.toggle('wide', !!o.wide);
+  $('#scrim').classList.remove('hidden');
+  modalClose = o.onClose || null;
+  if (o.after) o.after();
+  const first = $('#m-body input, #m-body select, #m-body textarea');
+  if (first && !o.noFocus) setTimeout(() => first.focus(), 30);
+}
+function closeModal() {
+  $('#scrim').classList.add('hidden');
+  $('#m-body').innerHTML = ''; $('#m-foot').innerHTML = '';
+  if (modalClose) { const f = modalClose; modalClose = null; f(); }
+}
+
+/** Choose an existing person or create one on the spot. */
+function pickPerson(o) {
+  const exclude = o.exclude || [];
+  const body =
+    '<div class="grp"><div class="grp-h">Create someone new</div>'
+    + '<div class="f2"><div class="fw"><label class="fl">First names</label><input class="field" id="pp-given" placeholder="Given name"></div>'
+    + '<div class="fw"><label class="fl">Last name</label><input class="field" id="pp-surname" value="' + esc(o.surname || '') + '" placeholder="Family name"></div></div>'
+    + '<div class="f2"><div class="fw"><label class="fl">Sex</label><select class="field" id="pp-sex">'
+    + SEXES.map(s => '<option value="' + s[0] + '"' + (s[0] === (o.sex || 'U') ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select></div>'
+    + '<div class="fw"><label class="fl">Born</label><input class="field" id="pp-birth" placeholder="e.g. 1952"></div></div>'
+    + '<button class="btn pri wide" id="pp-create"><svg><use href="#i-user-plus"/></svg>Create and link</button></div>'
+    + '<div class="grp"><div class="grp-h">…or link someone already in the tree</div>'
+    + '<div class="searchwrap"><svg><use href="#i-search"/></svg><input class="field with-icon" id="pp-q" placeholder="Search people…"></div>'
+    + '<div class="picker-list" id="pp-list"></div></div>';
+  openModal({
+    title: o.title, sub: o.sub, body: body,
+    foot: '<button class="btn" data-close="1">Cancel</button>',
+    after: function () {
+      const draw = () => {
+        const q = ($('#pp-q').value || '').trim().toLowerCase();
+        let list = sortPeople(allPeople().filter(p => exclude.indexOf(p.id) < 0), 'name');
+        if (q) list = list.filter(p => fullName(p).toLowerCase().indexOf(q) >= 0);
+        $('#pp-list').innerHTML = list.length
+          ? list.slice(0, 300).map(p => '<button class="pitem" data-pick="' + esc(p.id) + '">' + avatarHTML(p)
+            + '<span class="pitem-txt"><span class="pitem-name">' + esc(fullName(p)) + '</span><span class="pitem-sub">'
+            + esc(lifespan(p) || 'no dates') + '</span></span></button>').join('')
+          : '<div class="empty">No one else to link.</div>';
+      };
+      draw();
+      $('#pp-q').addEventListener('input', draw);
+      $('#pp-list').addEventListener('click', e => {
+        const b = e.target.closest('[data-pick]'); if (!b) return;
+        const id = b.dataset.pick; closeModal(); o.onPick(id, false);
+      });
+      const create = () => {
+        const given = $('#pp-given').value.trim(), surname = $('#pp-surname').value.trim();
+        const sex = $('#pp-sex').value, birth = $('#pp-birth').value.trim();
+        if (!given && !surname) { $('#pp-given').focus(); return toast('Give the new person a name first'); }
+        closeModal();
+        o.onPick({ given: given, surname: surname, sex: sex, birth: { date: birth, place: '' } }, true);
+      };
+      $('#pp-create').addEventListener('click', create);
+      ['pp-given', 'pp-surname', 'pp-birth'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') create(); }));
+      setTimeout(() => $('#pp-given').focus(), 30);
+    }
+  });
+}
+/** Resolve a pickPerson result (existing id or new-person patch) to an id. */
+function resolvePick(res) { return typeof res === 'string' ? res : addPerson(res).id; }
+
+/* ─── relationship-adding actions ─────────────────────────────────────── */
+function actAddParent(childId, famId) {
+  const p = P(childId); if (!p) return;
+  const known = parentsOf(childId);
+  pickPerson({
+    title: 'Add a parent', sub: 'for ' + fullName(p), exclude: known.concat([childId]),
+    surname: p.surname, sex: known.length && P(known[0]) && P(known[0]).sex === 'M' ? 'F' : 'M',
+    onPick: res => mutate(() => {
+      const id = resolvePick(res);
+      if (isAncestorOf(childId, id)) return toast('That would create a loop in the lineage');
+      const f = famId ? F(famId) : null, slot = f ? f.partners.indexOf(null) : -1;
+      if (f && slot >= 0) f.partners[slot] = id; else addParentTo(childId, id);
+      sel = id;
+    }, 'Parent added')
+  });
+}
+function actAddPartner(pid, famId) {
+  const p = P(pid); if (!p) return;
+  pickPerson({
+    title: 'Add a partner', sub: 'for ' + fullName(p), exclude: partnersOf(pid).concat([pid]),
+    sex: p.sex === 'M' ? 'F' : p.sex === 'F' ? 'M' : 'U',
+    onPick: res => mutate(() => {
+      const id = resolvePick(res);
+      const f = famId ? F(famId) : null, slot = f ? f.partners.indexOf(null) : -1;
+      if (f && slot >= 0) f.partners[slot] = id; else linkPartners(pid, id, 'married');
+      sel = id;
+    }, 'Partner added')
+  });
+}
+function actAddChild(pid, famId) {
+  const p = P(pid); if (!p) return;
+  pickPerson({
+    title: 'Add a child', sub: famId && F(famId) && otherPartner(F(famId), pid) ? 'to ' + fullName(p) + ' and ' + fullName(P(otherPartner(F(famId), pid))) : 'for ' + fullName(p),
+    exclude: childrenOf(pid).concat([pid]), surname: p.sex === 'F' ? (partnersOf(pid).map(x => P(x)).filter(Boolean)[0] || {}).surname || p.surname : p.surname,
+    onPick: res => mutate(() => {
+      const id = resolvePick(res);
+      if (isAncestorOf(id, pid)) return toast('That would create a loop in the lineage');
+      if (famId && F(famId)) linkChild(famId, id, 'birth'); else addChildTo(pid, id, 'birth');
+      sel = id;
+    }, 'Child added')
+  });
+}
+function actAddSibling(pid) {
+  const p = P(pid); if (!p) return;
+  pickPerson({
+    title: 'Add a sibling', sub: 'for ' + fullName(p), exclude: siblingsOf(pid).map(s => s.id).concat([pid]), surname: p.surname,
+    onPick: res => mutate(() => {
+      const id = resolvePick(res);
+      const fams = famcOf(pid);
+      if (fams.length) linkChild(fams[0].id, id, 'birth');
+      else {
+        const f = blankFamily({ partners: [null, null], status: 'unknown', children: [{ id: pid, rel: 'birth' }, { id: id, rel: 'birth' }] });
+        T.families[f.id] = f;
+      }
+      sel = id;
+    }, 'Sibling added')
+  });
+}
+
+/* ─── top-level dialogs ───────────────────────────────────────────────── */
+function dlgAddPerson() {
+  pickPerson({
+    title: 'Add a person', sub: 'They start unconnected — link them from the Family tab.',
+    exclude: allPeople().map(p => p.id),
+    onPick: res => mutate(() => { const p = addPerson(typeof res === 'string' ? {} : res); sel = p.id; if (!T.focus) T.focus = p.id; }, 'Person added')
+  });
+}
+function dlgTrees() {
+  const list = treeIndex();
+  const body = '<div class="picker-list" style="max-height:300px">' + (list.length ? list.map(t =>
+    '<div class="relrow"><span class="avatar" style="background:var(--accent)"><svg style="width:15px;height:15px"><use href="#i-tree"/></svg></span>'
+    + '<div class="pitem-txt" data-opentree="' + esc(t.id) + '" style="cursor:pointer"><div class="pitem-name">' + esc(t.name) + (t.id === T.id ? ' · open' : '') + '</div>'
+    + '<div class="pitem-sub">' + (t.count || 0) + ' people · ' + new Date(t.modified).toLocaleDateString() + '</div></div>'
+    + '<button class="x" data-duptree="' + esc(t.id) + '" title="Duplicate"><svg><use href="#i-copy"/></svg></button>'
+    + '<button class="x" data-deltree="' + esc(t.id) + '" title="Delete"><svg><use href="#i-trash"/></svg></button></div>').join('')
+    : '<div class="empty"><strong>No saved trees</strong>The tree you are working on saves automatically.</div>') + '</div>';
+  openModal({
+    title: 'Your trees', sub: 'Stored privately in this browser. Export to a file to keep a backup.',
+    body: body, noFocus: true,
+    foot: '<button class="btn" data-close="1">Close</button><button class="btn pri" id="new-tree"><svg><use href="#i-plus"/></svg>New tree</button>',
+    after: function () {
+      $('#new-tree').addEventListener('click', () => {
+        closeModal();
+        persistNow();
+        T = blankTree('New family tree'); sel = null;
+        undoStack.length = redoStack.length = 0;
+        reindex(); persist(); renderAll(); fitView();
+        toast('New tree created');
+      });
+      $('#m-body').addEventListener('click', e => {
+        const open = e.target.closest('[data-opentree]'), dup = e.target.closest('[data-duptree]'), del = e.target.closest('[data-deltree]');
+        if (open) { closeModal(); loadTree(open.dataset.opentree); }
+        else if (dup) {
+          const raw = localStorage.getItem(LS_TREE + dup.dataset.duptree);
+          if (!raw) return toast('Could not read that tree');
+          const t = JSON.parse(raw); t.id = uid('t_'); t.name = t.name + ' (copy)'; t.modified = Date.now();
+          try { localStorage.setItem(LS_TREE + t.id, JSON.stringify(t)); } catch (err) { return toast('Storage is full'); }
+          const list2 = treeIndex(); list2.unshift({ id: t.id, name: t.name, modified: t.modified, count: Object.keys(t.people).length });
+          writeIndex(list2); closeModal(); dlgTrees(); toast('Tree duplicated');
+        } else if (del) {
+          const id = del.dataset.deltree;
+          if (!confirm('Delete this tree permanently? This cannot be undone.')) return;
+          localStorage.removeItem(LS_TREE + id);
+          writeIndex(treeIndex().filter(t => t.id !== id));
+          if (id === T.id) { T = blankTree(); sel = null; reindex(); renderAll(); }
+          closeModal(); dlgTrees(); toast('Tree deleted');
+        }
+      });
+    }
+  });
+}
+function loadTree(id) {
+  persistNow();
+  const raw = localStorage.getItem(LS_TREE + id);
+  if (!raw) return toast('That tree could not be found');
+  try {
+    T = normaliseTree(JSON.parse(raw));
+    sel = null; undoStack.length = redoStack.length = 0;
+    reindex(); renderAll(); fitView(); toast('Opened “' + T.name + '”');
+  } catch (e) { toast('That tree file is damaged'); }
+}
+/** Fill in anything a older/foreign file may be missing. */
+function normaliseTree(t) {
+  const out = blankTree(t.name);
+  out.id = t.id || out.id; out.created = t.created || Date.now(); out.modified = t.modified || Date.now();
+  Object.keys(t.people || {}).forEach(id => { out.people[id] = Object.assign(blankPerson({ id: id }), t.people[id]); const p = out.people[id]; p.birth = Object.assign({ date: '', place: '' }, p.birth); p.death = Object.assign({ date: '', place: '', cause: '' }, p.death); p.events = p.events || []; p.tags = p.tags || []; });
+  Object.keys(t.families || {}).forEach(id => {
+    const f = Object.assign(blankFamily({ id: id }), t.families[id]);
+    f.marriage = Object.assign({ date: '', place: '' }, f.marriage);
+    f.divorce = Object.assign({ date: '' }, f.divorce);
+    f.partners = (f.partners || [null, null]).slice(0, 2);
+    while (f.partners.length < 2) f.partners.push(null);
+    f.children = (f.children || []).map(c => typeof c === 'string' ? { id: c, rel: 'birth' } : c);
+    out.families[id] = f;
+  });
+  out.focus = t.focus && out.people[t.focus] ? t.focus : Object.keys(out.people)[0] || null;
+  return out;
+}
+function dlgIO() {
+  openModal({
+    title: 'Import &amp; export', wide: true, noFocus: true,
+    sub: 'Your tree never leaves this device unless you export it.',
+    body: '<div class="grp"><div class="grp-h">Export</div><div class="f2">'
+      + '<button class="btn wide" data-x="json"><svg><use href="#i-save"/></svg>JSON (full backup)</button>'
+      + '<button class="btn wide" data-x="ged"><svg><use href="#i-export"/></svg>GEDCOM 5.5.1</button>'
+      + '<button class="btn wide" data-x="csv"><svg><use href="#i-export"/></svg>CSV (spreadsheet)</button>'
+      + '<button class="btn wide" data-x="svg"><svg><use href="#i-img"/></svg>Chart as SVG</button>'
+      + '<button class="btn wide" data-x="png"><svg><use href="#i-img"/></svg>Chart as PNG</button>'
+      + '<button class="btn wide" data-x="print"><svg><use href="#i-print"/></svg>Print the chart</button>'
+      + '</div><div class="hint" style="margin-top:8px">JSON keeps everything including photos. GEDCOM is the standard genealogy format that Ancestry, MyHeritage, Gramps and Family Tree Maker can read.</div></div>'
+      + '<div class="grp"><div class="grp-h">Import</div>'
+      + '<button class="btn wide" data-x="import"><svg><use href="#i-import"/></svg>Choose a .ged or .json file…</button>'
+      + '<div class="hint" style="margin-top:8px">Importing replaces the tree currently open. Export a backup first if you want to keep it.</div></div>'
+      + '<div class="grp"><div class="grp-h">Sample data</div>'
+      + '<button class="btn wide" data-x="sample">Load a sample family (replaces this tree)</button></div>',
+    foot: '<button class="btn" data-close="1">Close</button>',
+    after: function () {
+      $('#m-body').addEventListener('click', e => {
+        const b = e.target.closest('[data-x]'); if (!b) return;
+        const what = b.dataset.x;
+        if (what === 'json') exportJSON();
+        else if (what === 'ged') exportGED();
+        else if (what === 'csv') exportCSV();
+        else if (what === 'svg') exportSVG();
+        else if (what === 'png') exportPNG(2);
+        else if (what === 'print') { closeModal(); setTimeout(() => window.print(), 120); }
+        else if (what === 'import') { closeModal(); $('#file-in').click(); }
+        else if (what === 'sample') { closeModal(); loadSample(); }
+      });
+    }
+  });
+}
+function dlgRelationship() {
+  const ppl = sortPeople(allPeople(), 'name');
+  if (ppl.length < 2) return toast('Add at least two people first');
+  const opts = id => ppl.map(p => '<option value="' + esc(p.id) + '"' + (p.id === id ? ' selected' : '') + '>' + esc(fullName(p)) + (lifespan(p) ? ' (' + esc(lifespan(p)) + ')' : '') + '</option>').join('');
+  openModal({
+    title: 'How are they related?', noFocus: true,
+    body: '<div class="fw"><label class="fl">Person A</label><select class="field" id="rel-a">' + opts(T.focus) + '</select></div>'
+      + '<div class="fw"><label class="fl">Person B</label><select class="field" id="rel-b">' + opts(sel && sel !== T.focus ? sel : ppl.filter(p => p.id !== T.focus)[0].id) + '</select></div>'
+      + '<div id="rel-out"></div>',
+    foot: '<button class="btn" data-close="1">Close</button>',
+    after: function () {
+      const go = () => {
+        const a = $('#rel-a').value, b = $('#rel-b').value;
+        const r = relationship(a, b);
+        if (!r) return;
+        const path = relationPath(a, b);
+        $('#rel-out').innerHTML = '<div class="relresult"><div class="big">' + esc(fullName(P(b))) + '<br>is the ' + esc(r.label) + '</div>'
+          + (r.detail ? '<div class="path">' + esc(r.detail) + '</div>' : '')
+          + (path ? '<div class="path">' + esc(path) + '</div>' : '') + '</div>';
+      };
+      $('#rel-a').addEventListener('change', go);
+      $('#rel-b').addEventListener('change', go);
+      go();
+    }
+  });
+}
+function dlgHelp() {
+  const row = (k, d) => '<div class="shortcut-row"><span>' + d + '</span><span class="kbd">' + k + '</span></div>';
+  openModal({
+    title: 'Keyboard &amp; tips', noFocus: true,
+    body: '<div class="grp"><div class="grp-h">Shortcuts</div>'
+      + row('/', 'Search people')
+      + row('N', 'Add a person')
+      + row('F', 'Fit the chart to the screen')
+      + row('H', 'Centre on the focus person')
+      + row('+ / −', 'Zoom in and out')
+      + row('Ctrl+Z', 'Undo')
+      + row('Ctrl+Shift+Z', 'Redo')
+      + row('Esc', 'Close panel or dialog')
+      + row('Delete', 'Delete the selected person')
+      + '</div><div class="grp"><div class="grp-h">Working with the chart</div>'
+      + '<div class="hint" style="line-height:1.7">Drag to pan, scroll or pinch to zoom. <b>Click</b> a card to open it, <b>double-click</b> to re-centre the tree on that person, <b>right-click</b> for quick actions. Dashed lines mark adopted, step, foster and half relationships.</div></div>'
+      + '<div class="grp"><div class="grp-h">Dates</div><div class="hint" style="line-height:1.7">Type what you know: <b>1890</b>, <b>Mar 1890</b>, <b>12 Mar 1890</b>, <b>1890-03-12</b>, or qualified as <b>abt 1890</b>, <b>bef 1890</b>, <b>aft 1890</b>. Slash dates such as <b>3/12/1890</b> are read month-first, so write <b>12 Mar 1890</b> when it matters. The Checks tab flags dates that cannot be right.</div></div>'
+      + '<div class="grp"><div class="grp-h">Where your data lives</div><div class="hint" style="line-height:1.7">Everything is stored in this browser only — nothing is uploaded anywhere. Clearing site data will erase it, so export a JSON or GEDCOM backup from time to time.</div></div>',
+    foot: '<button class="btn pri" data-close="1">Got it</button>'
+  });
+}
+
+/* ─── sample tree ─────────────────────────────────────────────────────── */
+function loadSample() {
+  const t = blankTree('The Beauchamp Family');
+  const mk = o => { const p = blankPerson(o); t.people[p.id] = p; return p; };
+  const fam = (a, b, o) => { const f = blankFamily(Object.assign({ partners: [a ? a.id : null, b ? b.id : null] }, o || {})); t.families[f.id] = f; return f; };
+  const kid = (f, p, rel) => { f.children.push({ id: p.id, rel: rel || 'birth' }); return p; };
+
+  const gustave = mk({ given: 'Gustave', surname: 'Beauchamp', sex: 'M', living: false, birth: { date: '14 Apr 1888', place: 'Trois-Rivières, Quebec' }, death: { date: '2 Nov 1961', place: 'Montreal, Quebec', cause: '' }, occupation: 'Cabinetmaker' });
+  const eugenie = mk({ given: 'Eugénie', surname: 'Beauchamp', birthSurname: 'Lafleur', sex: 'F', living: false, birth: { date: '9 Sep 1892', place: 'Sorel, Quebec' }, death: { date: '1978', place: 'Montreal, Quebec' }, occupation: 'Seamstress' });
+  const g1 = fam(gustave, eugenie, { status: 'married', marriage: { date: '21 Jun 1913', place: 'Trois-Rivières, Quebec' } });
+
+  const albert = kid(g1, mk({ given: 'Albert', surname: 'Beauchamp', sex: 'M', living: false, birth: { date: '3 Mar 1915', place: 'Montreal, Quebec' }, death: { date: '1989' }, occupation: 'Railway engineer' }));
+  const jeanne = kid(g1, mk({ given: 'Jeanne', surname: 'Beauchamp', sex: 'F', living: false, birth: { date: '1917', place: 'Montreal, Quebec' }, death: { date: '2004' }, occupation: 'Schoolteacher' }));
+  const rene   = kid(g1, mk({ given: 'René', surname: 'Beauchamp', sex: 'M', living: false, birth: { date: 'abt 1920' }, death: { date: '1944', place: 'Normandy, France', cause: 'Killed in action' } }));
+
+  const marthe = mk({ given: 'Marthe', surname: 'Beauchamp', birthSurname: 'Ouellet', sex: 'F', living: false, birth: { date: '11 Jul 1919', place: 'Rimouski, Quebec' }, death: { date: '2001' } });
+  const g2 = fam(albert, marthe, { status: 'married', marriage: { date: '1941', place: 'Montreal, Quebec' } });
+
+  const claude = kid(g2, mk({ given: 'Claude', surname: 'Beauchamp', sex: 'M', living: false, birth: { date: '28 Jan 1943', place: 'Montreal, Quebec' }, death: { date: '2019' }, occupation: 'Pharmacist' }));
+  const denise = kid(g2, mk({ given: 'Denise', surname: 'Beauchamp', sex: 'F', birth: { date: '1946', place: 'Montreal, Quebec' }, occupation: 'Nurse' }));
+  const paul   = kid(g2, mk({ given: 'Paul', surname: 'Beauchamp', sex: 'M', birth: { date: '1951', place: 'Montreal, Quebec' } }));
+
+  const helene = mk({ given: 'Hélène', surname: 'Beauchamp', birthSurname: 'Gagnon', sex: 'F', birth: { date: '5 May 1947', place: 'Quebec City, Quebec' } });
+  const g3 = fam(claude, helene, { status: 'married', marriage: { date: '1969', place: 'Quebec City' } });
+  const sylvie = kid(g3, mk({ given: 'Sylvie', surname: 'Beauchamp', sex: 'F', birth: { date: '1971', place: 'Montreal, Quebec' }, occupation: 'Architect' }));
+  const marc   = kid(g3, mk({ given: 'Marc', surname: 'Beauchamp', sex: 'M', birth: { date: '1974', place: 'Montreal, Quebec' }, occupation: 'Software developer' }));
+
+  const nadia = mk({ given: 'Nadia', surname: 'Beauchamp', birthSurname: 'Haddad', sex: 'F', birth: { date: '1976', place: 'Beirut, Lebanon' }, occupation: 'Physician' });
+  const g4 = fam(marc, nadia, { status: 'married', marriage: { date: '2004', place: 'Montreal, Quebec' } });
+  kid(g4, mk({ given: 'Léa', surname: 'Beauchamp', sex: 'F', birth: { date: '2007', place: 'Montreal, Quebec' } }));
+  kid(g4, mk({ given: 'Samuel', surname: 'Beauchamp', sex: 'M', birth: { date: '2010', place: 'Montreal, Quebec' } }));
+
+  const tomas = mk({ given: 'Tomás', surname: 'Ferreira', sex: 'M', birth: { date: '1969', place: 'Porto, Portugal' } });
+  const g5 = fam(sylvie, tomas, { status: 'divorced', marriage: { date: '1998' }, divorce: { date: '2012' } });
+  kid(g5, mk({ given: 'Inès', surname: 'Ferreira', sex: 'F', birth: { date: '2001', place: 'Montreal, Quebec' } }));
+
+  const g6 = fam(denise, mk({ given: 'Robert', surname: 'Cormier', sex: 'M', living: false, birth: { date: '1943' }, death: { date: '2015' } }), { status: 'married', marriage: { date: '1972' } });
+  kid(g6, mk({ given: 'Julie', surname: 'Cormier', sex: 'F', birth: { date: '1975' } }));
+  kid(g6, mk({ given: 'Étienne', surname: 'Cormier', sex: 'M', birth: { date: '1979' } }), 'adopted');
+
+  jeanne.notes = 'Taught at École Saint-Enfant-Jésus for 38 years. Kept the family photograph albums that most of these dates come from.';
+  rene.events.push({ type: 'Military service', date: '1942', place: 'Royal 22e Régiment', desc: 'Enlisted in Montreal' });
+  marc.tags = ['direct line'];
+
+  t.focus = marc.id;
+  persistNow();
+  T = t; sel = marc.id;
+  undoStack.length = redoStack.length = 0;
+  reindex(); persist(); renderAll(); fitView();
+  toast('Sample family loaded — explore, then start your own');
+}
+
+/* ─── render orchestration ────────────────────────────────────────────── */
+let railTab = 'people';
+function renderAll(refit) {
+  $('#tree-name').value = T.name;
+  renderList();
+  if (railTab === 'checks') renderChecks();
+  if (railTab === 'stats') renderStats();
+  renderDetail();
+  renderChart(!refit);
+  $('#btn-undo').disabled = !undoStack.length;
+  $('#btn-redo').disabled = !redoStack.length;
+}
+function select(id, recentre) {
+  sel = id;
+  renderList(); renderDetail(); renderChart(true);
+  if (recentre) centreOn(id);
+  else {
+    // keep the highlight in sync without moving the view
+    $$('#viewport .node').forEach(n => n.classList.toggle('sel', n.dataset.id === id));
+  }
+}
+function setFocus(id) {
+  if (!P(id)) return;
+  mutate(() => { T.focus = id; sel = id; });
+  renderChart(false);
+  toast('Tree centred on ' + fullName(P(id)));
+}
+
+/* ─── context menu ────────────────────────────────────────────────────── */
+function showCtx(x, y, id) {
+  const p = P(id); if (!p) return;
+  const m = $('#ctx');
+  const item = (act, icon, label, cls) => '<button data-act="' + act + '"' + (cls ? ' class="' + cls + '"' : '') + '><svg><use href="#i-' + icon + '"/></svg>' + label + '</button>';
+  m.innerHTML = '<div class="mlabel">' + esc(trunc(fullName(p), 150, 12)) + '</div>'
+    + item('open', 'user-plus', 'Open record')
+    + item('focus', 'target', 'Centre tree here')
+    + '<hr>'
+    + item('parent', 'up', 'Add a parent')
+    + item('partner', 'heart', 'Add a partner')
+    + item('child', 'down', 'Add a child')
+    + item('sibling', 'link', 'Add a sibling')
+    + '<hr>'
+    + item('rel', 'link', 'Relationship to focus')
+    + item('delete', 'trash', 'Delete person', 'dgr');
+  m.dataset.id = id;
+  m.classList.remove('hidden');
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.min(x, window.innerWidth - r.width - 8) + 'px';
+  m.style.top = Math.min(y, window.innerHeight - r.height - 8) + 'px';
+}
+function hideCtx() { $('#ctx').classList.add('hidden'); }
+
+function confirmDelete(id) {
+  const p = P(id); if (!p) return;
+  const links = parentsOf(id).length + childrenOf(id).length + partnersOf(id).length;
+  openModal({
+    title: 'Delete ' + fullName(p) + '?',
+    body: '<p style="font-size:13.5px;line-height:1.6;color:var(--ink-2)">This removes the record'
+      + (links ? ' and unlinks ' + links + ' relationship' + (links === 1 ? '' : 's') : '')
+      + '. Everyone else stays. You can undo this straight afterwards.</p>',
+    foot: '<button class="btn" data-close="1">Cancel</button><button class="btn" style="background:var(--danger);border-color:var(--danger);color:#fff" id="del-yes">Delete</button>',
+    noFocus: true,
+    after: function () { $('#del-yes').addEventListener('click', () => { closeModal(); mutate(() => deletePerson(id), 'Deleted — press Ctrl+Z to undo'); }); }
+  });
+}
+
+/* ─── event wiring ────────────────────────────────────────────────────── */
+function wire() {
+  // top bar
+  $('#btn-add').addEventListener('click', dlgAddPerson);
+  $('#btn-undo').addEventListener('click', undo);
+  $('#btn-redo').addEventListener('click', redo);
+  $('#btn-io').addEventListener('click', dlgIO);
+  $('#btn-trees').addEventListener('click', dlgTrees);
+  $('#btn-rel').addEventListener('click', dlgRelationship);
+  $('#btn-help').addEventListener('click', dlgHelp);
+  $('#btn-theme').addEventListener('click', () => setTheme(prefs.theme === 'dark' ? 'light' : 'dark'));
+  $('#btn-rail').addEventListener('click', () => $('#rail').classList.toggle('open'));
+  $('#tree-name').addEventListener('change', e => mutate(() => { T.name = e.target.value.trim() || 'Untitled tree'; }));
+
+  // empty state
+  $('#empty-add').addEventListener('click', dlgAddPerson);
+  $('#empty-sample').addEventListener('click', loadSample);
+  $('#empty-import').addEventListener('click', () => $('#file-in').click());
+
+  // rail
+  $$('.rail-tab').forEach(b => b.addEventListener('click', () => {
+    railTab = b.dataset.rail;
+    $$('.rail-tab').forEach(x => x.classList.toggle('on', x === b));
+    $$('.rail-pane').forEach(x => x.classList.toggle('on', x.id === 'pane-' + railTab));
+    if (railTab === 'checks') renderChecks();
+    if (railTab === 'stats') renderStats();
+  }));
+  $('#q').addEventListener('input', renderList);
+  $('#f-sort').addEventListener('change', renderList);
+  $('#f-show').addEventListener('change', renderList);
+  $('#plist').addEventListener('click', e => {
+    const b = e.target.closest('[data-id]'); if (!b) return;
+    select(b.dataset.id, true);
+    if (window.innerWidth <= 900) $('#rail').classList.remove('open');
+  });
+  $('#pane-checks').addEventListener('click', e => {
+    const b = e.target.closest('[data-id]'); if (!b) return;
+    select(b.dataset.id, true);
+  });
+
+  // chart toolbar
+  $$('#mode-seg button').forEach(b => b.addEventListener('click', () => {
+    prefs.mode = b.dataset.mode; savePrefs();
+    $$('#mode-seg button').forEach(x => x.classList.toggle('on', x === b));
+    renderChart(false);
+  }));
+  const bindRange = (id, key, out) => {
+    const r = $(id);
+    r.value = prefs[key];
+    $(out).textContent = prefs[key];
+    r.addEventListener('input', () => { prefs[key] = +r.value; $(out).textContent = r.value; savePrefs(); renderChart(true); });
+  };
+  bindRange('#depth-up', 'up', '#depth-up-v');
+  bindRange('#depth-dn', 'down', '#depth-dn-v');
+  $('#opt-sibs').addEventListener('change', e => { prefs.sibs = e.target.checked; savePrefs(); renderChart(true); });
+  $('#opt-ghosts').addEventListener('change', e => { prefs.ghosts = e.target.checked; savePrefs(); renderChart(true); });
+  $('#z-in').addEventListener('click', () => zoomBy(1.25));
+  $('#z-out').addEventListener('click', () => zoomBy(0.8));
+  $('#z-fit').addEventListener('click', fitView);
+  $('#z-home').addEventListener('click', () => centreOn(T.focus, 1));
+
+  // chart interaction
+  const svg = $('#chart');
+  const pointers = new Map();
+  let drag = null, pinch = null, moved = false;
+  svg.addEventListener('pointerdown', e => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      pinch = { d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), k: view.k };
+      drag = null; return;
+    }
+    drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+    moved = false;
+    svg.setPointerCapture(e.pointerId);
+    svg.classList.add('dragging');
+  });
+  svg.addEventListener('pointermove', e => {
+    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const r = svg.getBoundingClientRect();
+      const cx = (pts[0].x + pts[1].x) / 2 - r.left, cy = (pts[0].y + pts[1].y) / 2 - r.top;
+      const target = clamp(pinch.k * (d / pinch.d), 0.08, 3);
+      zoomBy(target / view.k, cx, cy);
+      moved = true; return;
+    }
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    view.x = drag.vx + dx; view.y = drag.vy + dy;
+    applyView();
+  });
+  const endPointer = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    drag = null; svg.classList.remove('dragging');
+  };
+  svg.addEventListener('pointerup', endPointer);
+  svg.addEventListener('pointercancel', endPointer);
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = svg.getBoundingClientRect();
+    zoomBy(e.deltaY < 0 ? 1.12 : 0.89, e.clientX - r.left, e.clientY - r.top);
+  }, { passive: false });
+  svg.addEventListener('click', e => {
+    if (moved) { moved = false; return; }
+    const ghost = e.target.closest('[data-ghost]');
+    if (ghost) return actAddParent(ghost.dataset.ghost, null);
+    const n = e.target.closest('.node[data-id]');
+    if (n) select(n.dataset.id, false);
+  });
+  svg.addEventListener('dblclick', e => {
+    const n = e.target.closest('.node[data-id]');
+    if (n) setFocus(n.dataset.id);
+  });
+  svg.addEventListener('contextmenu', e => {
+    const n = e.target.closest('.node[data-id]');
+    if (!n) return;
+    e.preventDefault();
+    select(n.dataset.id, false);
+    showCtx(e.clientX, e.clientY, n.dataset.id);
+  });
+  // long-press for touch
+  let lp = null;
+  svg.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    const n = e.target.closest('.node[data-id]');
+    if (!n) return;
+    lp = setTimeout(() => { select(n.dataset.id, false); showCtx(e.clientX, e.clientY, n.dataset.id); }, 520);
+  });
+  ['pointerup', 'pointermove', 'pointercancel'].forEach(ev => svg.addEventListener(ev, () => { clearTimeout(lp); }));
+
+  $('#ctx').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const id = $('#ctx').dataset.id;
+    hideCtx();
+    const act = b.dataset.act;
+    if (act === 'open') select(id, true);
+    else if (act === 'focus') setFocus(id);
+    else if (act === 'parent') actAddParent(id, null);
+    else if (act === 'partner') actAddPartner(id, null);
+    else if (act === 'child') actAddChild(id, null);
+    else if (act === 'sibling') actAddSibling(id);
+    else if (act === 'rel') { sel = id; dlgRelationship(); }
+    else if (act === 'delete') confirmDelete(id);
+  });
+  document.addEventListener('pointerdown', e => { if (!e.target.closest('#ctx')) hideCtx(); }, true);
+  window.addEventListener('resize', debounce(() => { if (CHART) applyView(); }, 150));
+
+  // detail panel
+  $('#d-close').addEventListener('click', () => { sel = null; renderDetail(); renderList(); renderChart(true); });
+  $('#d-focus').addEventListener('click', () => { if (sel) setFocus(sel); });
+  $('#d-delete').addEventListener('click', () => { if (sel) confirmDelete(sel); });
+  $$('.dtab').forEach(b => b.addEventListener('click', () => { dTab = b.dataset.dtab; renderDetail(); }));
+  $('#photo-btn').addEventListener('click', () => { if (sel) $('#photo-in').click(); });
+
+  const detail = $('#detail');
+  detail.addEventListener('change', e => {
+    const t = e.target, p = P(sel); if (!p) return;
+    if (t.dataset.path) {
+      const v = t.type === 'checkbox' ? t.checked : t.value;
+      mutate(() => setPath(p, t.dataset.path, v));
+    } else if (t.dataset.fam) {
+      const f = F(t.dataset.fam); if (!f) return;
+      mutate(() => setPath(f, t.dataset.fampath, t.value));
+    } else if (t.dataset.childrel) {
+      const f = F(t.dataset.childrel); if (!f) return;
+      mutate(() => { const c = f.children.filter(c => c.id === sel)[0]; if (c) c.rel = t.value; });
+    } else if (t.dataset.ev != null && t.dataset.evpath) {
+      mutate(() => { const ev = p.events[+t.dataset.ev]; if (ev) ev[t.dataset.evpath] = t.value; });
+    }
+  });
+  detail.addEventListener('keydown', e => {
+    if (e.target.id === 'tag-in' && e.key === 'Enter') {
+      e.preventDefault();
+      const v = e.target.value.trim(); if (!v) return;
+      mutate(() => { const p = P(sel); p.tags = uniq((p.tags || []).concat([v])); });
+    }
+  });
+  detail.addEventListener('click', e => {
+    const p = P(sel); if (!p) return;
+    const go = e.target.closest('[data-goto]');
+    if (go) return select(go.dataset.goto, true);
+    const untag = e.target.closest('[data-untag]');
+    if (untag) return mutate(() => { p.tags = (p.tags || []).filter(t => t !== untag.dataset.untag); });
+    if (e.target.closest('[data-addparent]')) return actAddParent(p.id, null);
+    const ap2 = e.target.closest('[data-addparent2]');
+    if (ap2) return actAddParent(p.id, ap2.dataset.addparent2);
+    if (e.target.closest('[data-addpartner]')) return actAddPartner(p.id, null);
+    const app2 = e.target.closest('[data-addpartner2]');
+    if (app2) return actAddPartner(p.id, app2.dataset.addpartner2);
+    const ac = e.target.closest('[data-addchild]');
+    if (ac) return actAddChild(p.id, ac.dataset.addchild === 'new' ? null : ac.dataset.addchild);
+    const unpa = e.target.closest('[data-unparent]');
+    if (unpa) { const bits = unpa.dataset.unparent.split('|'); return mutate(() => unlinkPartner(bits[0], bits[1]), 'Unlinked'); }
+    const unp = e.target.closest('[data-unpartner]');
+    if (unp) { const f = F(unp.dataset.unpartner); const other = f ? otherPartner(f, p.id) : null; return mutate(() => { if (other) unlinkPartner(f.id, other); }, 'Unlinked'); }
+    const unk = e.target.closest('[data-unkid]');
+    if (unk) { const parts = unk.dataset.unkid.split('|'); return mutate(() => unlinkChild(parts[0], parts[1]), 'Unlinked'); }
+    if (e.target.closest('[data-addev]')) return mutate(() => p.events.push({ type: '', date: '', place: '', desc: '' }));
+    const de = e.target.closest('[data-delev]');
+    if (de) return mutate(() => p.events.splice(+de.dataset.delev, 1));
+    if (e.target.closest('#np-photo')) return $('#photo-in').click();
+    if (e.target.closest('#np-photo-x')) return mutate(() => { p.photo = null; }, 'Photo removed');
+  });
+
+  // files
+  $('#photo-in').addEventListener('change', e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f || !sel) return;
+    readPhoto(f, data => mutate(() => { const p = P(sel); if (p) p.photo = data; }, 'Photo added'));
+  });
+  $('#file-in').addEventListener('change', e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => {
+      const text = String(fr.result);
+      try {
+        let t;
+        if (/^\s*\{/.test(text)) t = normaliseTree(JSON.parse(text));
+        else t = normaliseTree(parseGEDCOM(text));
+        if (!Object.keys(t.people).length) return toast('No people found in that file');
+        if (!t.name || t.name === 'Imported tree') t.name = f.name.replace(/\.(ged|gedcom|json)$/i, '');
+        persistNow();
+        T = t; sel = null; undoStack.length = redoStack.length = 0;
+        reindex(); persist(); renderAll(); fitView();
+        toast('Imported ' + Object.keys(T.people).length + ' people from ' + f.name);
+      } catch (err) { toast('Could not read that file — is it a valid GEDCOM or JSON?'); }
+    };
+    fr.readAsText(f);
+  });
+
+  // modal
+  $('#m-x').addEventListener('click', closeModal);
+  $('#scrim').addEventListener('click', e => { if (e.target.id === 'scrim') closeModal(); });
+  $('#m-foot').addEventListener('click', e => { if (e.target.closest('[data-close]')) closeModal(); });
+
+  // keyboard
+  document.addEventListener('keydown', e => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
+    if (e.key === 'Escape') {
+      if (!$('#scrim').classList.contains('hidden')) return closeModal();
+      if (!$('#ctx').classList.contains('hidden')) return hideCtx();
+      if (typing) return e.target.blur();
+      if (sel) { sel = null; renderDetail(); renderList(); renderChart(true); }
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); return e.shiftKey ? redo() : undo(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); return redo(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); return exportJSON(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') { e.preventDefault(); return window.print(); }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === '/') { e.preventDefault(); $('#rail').classList.add('open'); $('#q').focus(); $('#q').select(); return; }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); return dlgAddPerson(); }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); return fitView(); }
+    if (e.key === 'h' || e.key === 'H') { e.preventDefault(); return centreOn(T.focus, 1); }
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); return zoomBy(1.25); }
+    if (e.key === '-' || e.key === '_') { e.preventDefault(); return zoomBy(0.8); }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && sel) { e.preventDefault(); return confirmDelete(sel); }
+  });
+  window.addEventListener('beforeunload', persistNow);
+}
+function setTheme(mode) {
+  prefs.theme = mode; savePrefs();
+  document.documentElement.setAttribute('data-theme', mode);
+  $('#btn-theme').innerHTML = '<svg><use href="#i-' + (mode === 'dark' ? 'sun' : 'moon') + '"/></svg>';
+  if (CHART) renderChart(true);
+}
+
+/* ─── boot ────────────────────────────────────────────────────────────── */
+(function boot() {
+  loadPrefs();
+  if (!prefs.theme) prefs.theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', prefs.theme);
+
+  const idx = treeIndex();
+  let loaded = false;
+  if (idx.length) {
+    const raw = localStorage.getItem(LS_TREE + idx[0].id);
+    if (raw) { try { T = normaliseTree(JSON.parse(raw)); loaded = true; } catch (e) {} }
+  }
+  if (!loaded) T = blankTree();
+
+  $$('#mode-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === prefs.mode));
+  $('#opt-sibs').checked = prefs.sibs;
+  $('#opt-ghosts').checked = prefs.ghosts;
+
+  reindex();
+  wire();
+  setTheme(prefs.theme);
+  renderAll(true);
+  fitView();
+  if (!Object.keys(T.people).length) $('#stage-empty').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>

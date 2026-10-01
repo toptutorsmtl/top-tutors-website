@@ -1,3 +1,4 @@
 # Manim render output — regenerate with `manim -qh primoris_reel.py <Scene>`
 media/
 __pycache__/
+preview_*.mp4

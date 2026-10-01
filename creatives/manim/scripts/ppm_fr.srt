@@ -1,0 +1,31 @@
+1
+00:00:02,000 --> 00:00:05,000
+La plupart des gens écrivent deux parenthèses et devinent.
+
+2
+00:00:05,000 --> 00:00:09,000
+Ne devine pas. Multiplie les extrêmes.
+
+3
+00:00:09,000 --> 00:00:13,000
+Trouve deux nombres qui donnent −60 en produit et 11 en somme.
+
+4
+00:00:13,000 --> 00:00:16,000
+Quinze et moins quatre.
+
+5
+00:00:16,000 --> 00:00:21,000
+Décompose le terme du milieu. Ne touche à rien d'autre.
+
+6
+00:00:21,000 --> 00:00:26,000
+Regroupe par paires. Factorise chaque paire.
+
+7
+00:00:26,000 --> 00:00:29,000
+La même parenthèse deux fois. C'est la preuve que ça marche.
+
+8
+00:00:29,000 --> 00:00:35,000
+Le piège est là — si les parenthèses ne sont pas identiques, ce sont tes deux nombres qui sont faux, pas ta méthode.

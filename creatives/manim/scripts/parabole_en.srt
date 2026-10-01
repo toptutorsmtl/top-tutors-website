@@ -1,0 +1,23 @@
+1
+00:00:02,000 --> 00:00:05,000
+You want the vertex. You don't need the formula.
+
+2
+00:00:05,000 --> 00:00:10,000
+Pull the two out of the first two terms only.
+
+3
+00:00:10,000 --> 00:00:15,000
+Half of six is three. Three squared is nine. Put it in.
+
+4
+00:00:15,000 --> 00:00:20,000
+Here's the trap. You didn't add nine. You added two times nine.
+
+5
+00:00:20,000 --> 00:00:25,000
+So take eighteen back out.
+
+6
+00:00:25,000 --> 00:00:31,000
+Vertex, three and minus thirteen.

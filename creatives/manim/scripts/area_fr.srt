@@ -1,0 +1,23 @@
+1
+00:00:02,000 --> 00:00:05,000
+Les côtés ont doublé. Qu'est-ce qui arrive à l'aire ?
+
+2
+00:00:05,000 --> 00:00:08,000
+La plupart des gens disent : elle double.
+
+3
+00:00:08,000 --> 00:00:12,000
+Compte les carrés.
+
+4
+00:00:12,000 --> 00:00:16,000
+Quatre fois. Le rapport est au carré.
+
+5
+00:00:16,000 --> 00:00:21,000
+Et en trois dimensions, il est au cube.
+
+6
+00:00:21,000 --> 00:00:28,000
+Le piège est là. Les côtés par k. Les aires par k au carré. Les volumes par k au cube. Un seul rapport, trois rôles différents.

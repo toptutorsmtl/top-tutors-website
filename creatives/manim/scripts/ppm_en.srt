@@ -1,0 +1,31 @@
+1
+00:00:02,000 --> 00:00:05,000
+Most people go straight to two brackets and guess.
+
+2
+00:00:05,000 --> 00:00:09,000
+Don't guess. Multiply the ends.
+
+3
+00:00:09,000 --> 00:00:13,000
+Now find two numbers that multiply to negative sixty and add to eleven.
+
+4
+00:00:13,000 --> 00:00:16,000
+Fifteen and minus four.
+
+5
+00:00:16,000 --> 00:00:21,000
+Split the middle term. Don't touch anything else.
+
+6
+00:00:21,000 --> 00:00:26,000
+Group in pairs. Factor each pair.
+
+7
+00:00:26,000 --> 00:00:29,000
+Same bracket both times. That's how you know it worked.
+
+8
+00:00:29,000 --> 00:00:35,000
+Here's the trap - if the brackets don't match, your two numbers were wrong, not your method.

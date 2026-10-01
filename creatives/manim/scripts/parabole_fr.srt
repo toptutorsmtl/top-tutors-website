@@ -1,0 +1,23 @@
+1
+00:00:02,000 --> 00:00:05,000
+Tu veux le sommet. Tu n'as pas besoin de la formule.
+
+2
+00:00:05,000 --> 00:00:10,000
+Sors le deux des deux premiers termes seulement.
+
+3
+00:00:10,000 --> 00:00:15,000
+La moitié de six, trois. Trois au carré, neuf. Mets-le dedans.
+
+4
+00:00:15,000 --> 00:00:20,000
+Le piège est là. Tu n'as pas ajouté neuf. Tu as ajouté deux fois neuf.
+
+5
+00:00:20,000 --> 00:00:25,000
+Alors retire dix-huit.
+
+6
+00:00:25,000 --> 00:00:31,000
+Sommet, trois et moins treize.

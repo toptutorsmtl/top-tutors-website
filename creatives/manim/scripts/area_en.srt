@@ -1,0 +1,23 @@
+1
+00:00:02,000 --> 00:00:05,000
+The sides doubled. What happened to the area?
+
+2
+00:00:05,000 --> 00:00:08,000
+Most people say doubled.
+
+3
+00:00:08,000 --> 00:00:12,000
+Count the squares.
+
+4
+00:00:12,000 --> 00:00:16,000
+Four times. The ratio squares.
+
+5
+00:00:16,000 --> 00:00:21,000
+And in three dimensions it cubes.
+
+6
+00:00:21,000 --> 00:00:28,000
+Here's the trap. Sides scale by k. Areas by k squared. Volumes by k cubed. One ratio, three different jobs.

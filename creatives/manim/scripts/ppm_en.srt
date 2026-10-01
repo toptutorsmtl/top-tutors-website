@@ -1,31 +1,23 @@
 1
-00:00:02,000 --> 00:00:05,000
-Most people go straight to two brackets and guess.
+00:00:02,000 --> 00:00:06,000
+Most people see 'per million' and just multiply by ten to the six.
 
 2
-00:00:05,000 --> 00:00:09,000
-Don't guess. Multiply the ends.
+00:00:06,000 --> 00:00:11,000
+ppm is a mass ratio. You need the mass of the solution too.
 
 3
-00:00:09,000 --> 00:00:13,000
-Now find two numbers that multiply to negative sixty and add to eleven.
+00:00:11,000 --> 00:00:16,000
+One litre of water weighs a thousand grams. That's the piece nobody writes down.
 
 4
-00:00:13,000 --> 00:00:16,000
-Fifteen and minus four.
+00:00:16,000 --> 00:00:20,000
+Nought point seven two, over a thousand.
 
 5
-00:00:16,000 --> 00:00:21,000
-Split the middle term. Don't touch anything else.
+00:00:20,000 --> 00:00:25,000
+Times ten to the six. Seven hundred and twenty.
 
 6
-00:00:21,000 --> 00:00:26,000
-Group in pairs. Factor each pair.
-
-7
-00:00:26,000 --> 00:00:29,000
-Same bracket both times. That's how you know it worked.
-
-8
-00:00:29,000 --> 00:00:35,000
-Here's the trap - if the brackets don't match, your two numbers were wrong, not your method.
+00:00:25,000 --> 00:00:32,000
+Here's the trap — ppm is milligrams per litre. Convert the grams, don't scale the litres.

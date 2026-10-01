@@ -1,23 +1,27 @@
 1
-00:00:02,000 --> 00:00:05,000
-You want the vertex. You don't need the formula.
+00:00:02,000 --> 00:00:06,000
+f of x is the height, so this is every point on or above the curve.
 
 2
-00:00:05,000 --> 00:00:10,000
-Pull the two out of the first two terms only.
+00:00:06,000 --> 00:00:10,000
+Boundary first. Factor it to find where it crosses.
 
 3
-00:00:10,000 --> 00:00:15,000
-Half of six is three. Three squared is nine. Put it in.
+00:00:10,000 --> 00:00:14,000
+One and two.
 
 4
-00:00:15,000 --> 00:00:20,000
-Here's the trap. You didn't add nine. You added two times nine.
+00:00:14,000 --> 00:00:19,000
+Greater than or equal. The curve itself is in the region — solid, never dashed.
 
 5
-00:00:20,000 --> 00:00:25,000
-So take eighteen back out.
+00:00:19,000 --> 00:00:24,000
+Now, which side? The symbol does not tell you. Test a point. Take the origin.
 
 6
-00:00:25,000 --> 00:00:31,000
-Vertex, three and minus thirteen.
+00:00:24,000 --> 00:00:29,000
+Zero is not greater than two. False — so the origin is out, and you shade the other side.
+
+7
+00:00:29,000 --> 00:00:35,000
+Here's the trap — 'greater than' does not mean up the page. One test point settles it every time.

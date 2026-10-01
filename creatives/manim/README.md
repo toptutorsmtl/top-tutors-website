@@ -32,16 +32,27 @@ which keeps glyph weight closer to pen-on-paper than a TeX render anyway.
 
 ## The creatives
 
-| Scene | Source creative in Drive | Beat sheet |
+| Scene | Source creative in Drive | Problem |
 | :--- | :--- | :--- |
-| `Ppm{Fr,En}` | `matei_ppm_fr.mp4`, `matei_ppm_en.mp4` | R1 — factoring when a ≠ 1, produit-somme |
-| `Parabole{Fr,En}` | `matei_parabole_fr.mp4`, `matei_parabole_en_hook_1_short.mp4` | R2 — completing the square, the vertex without the formula |
-| `Area{Fr,En}` | `matei_area_fr.mp4` | R5 — the k² and k³ trap, similar figures |
+| `Ppm{Fr,En}` | `matei_ppm_fr.mp4`, `matei_ppm_en.mp4` | Convert 0.72 g/L to ppm |
+| `Area{Fr,En}` | `matei_area_fr.mp4` | Find the dimensions of a rectangle with sides x + 2 and x − 2 and area 21 m² |
+| `Parabole{Fr,En}` | `matei_parabole_fr.mp4`, `matei_parabole_en_hook_1_short.mp4` | Shade the region where f(x) ≥ x² − 3x + 2 |
 
-Beat text, timings and on-screen working come from the beat sheets in
-`PRIMORIS_Cycle02_PreProduction.md` (sections 4 and 10), matched to the filenames.
-**The mapping is an inference, not something read off the videos** — see the note at
-the bottom.
+The maths, checked:
+
+- **ppm** — 0.72 g/L ÷ 1000 g/L × 10⁶ = **720 ppm**, i.e. 720 mg/L. The step that
+  carries the whole conversion is that one litre of a dilute aqueous solution weighs
+  1000 g; the animation says that out loud rather than hiding it in a shortcut.
+- **area** — (x+2)(x−2) = 21 → x² = 25 → x = ±5. x = −5 gives a side of −3 m and is
+  rejected, so x = 5 and the dimensions are **7 m × 3 m**.
+- **parabole** — boundary (x−1)(x−2), roots 1 and 2. `≥` means a solid boundary.
+  Testing the origin: 0 ≥ 2 is false, so the origin is outside and the region is the
+  one **on and above the curve**.
+
+**A reading to confirm on the parabola creative.** `f(x) ≥ x² − 3x + 2` names `f`
+without defining it. The animation treats f(x) as the height — that is, it shades
+`y ≥ x² − 3x + 2` — and says so on screen at 0:02. If `f` was meant to be a second,
+given function, this is the region between two curves instead and the beats change.
 
 ## Writing a creative
 
@@ -52,7 +63,7 @@ straight off the beat sheet, so the animation and the `.srt` can never drift apa
 
 ```python
 "discriminant": {
-    "title": "R3 - The discriminant",
+    "title": "The discriminant",
     "tag": {"fr": "combien de solutions ?", "en": "how many solutions?"},
     "beats": [
         Beat(0.0, "", [line("x² − 6x + 9 = 0", key="q", size=60)]),
@@ -93,7 +104,14 @@ Wrap any substring in `[[ ]]` to put just that part in red:
 `line("2(x² − 6x + [[9]])")` reddens the nine and nothing else.
 
 New figures go in `DIAGRAMS` as a function returning `(VGroup, steps)`, where `steps`
-maps a step name to the mobjects `diagram_step` reveals.
+maps a step name to the mobjects `diagram_step` reveals; a `_hide_on_<step>` key lists
+mobjects that step removes. Hide anything a step reveals with `_hide(...)` rather than
+`set_opacity(0)`, so a translucent fill comes back at its own opacity instead of 1.
+Two figures ship: `labelled_rect` and `parabola_region`.
+
+Layout is fitted, not fixed: the renderer counts the lines and figures a creative uses
+and tightens the line gap so the working always clears the trap card. A long creative
+compresses instead of overlapping.
 
 ## Brand rules the code enforces
 
@@ -104,23 +122,19 @@ pen, one accent colour used for exactly one thing, the mistake*:
   and the trap phrase. Nothing else in frame can be red.
 - `trap()` raises if a creative fires it more than once. The signature works because
   it lands at one beat, not whenever it fits.
-- **One deliberate deviation.** R1's beat sheet asks for a *correct* step — the
-  matching bracket at 0:26 — to be circled in red, which contradicts the signature.
-  `STRICT_RED_FOR_MISTAKES_ONLY = True` renders that ring in ink instead. Set it to
-  `False` to follow the beat sheet literally.
+- `circle(role="confirm")` — the ring round a correct final answer — renders in **ink**,
+  not red, because of `STRICT_RED_FOR_MISTAKES_ONLY = True`. Set it to `False` if you
+  ever want a correct step ringed in red; the rest of the signature still holds.
 
-## On the transcripts
+## Where the content came from
 
-These beats are the **scripts**, not transcripts pulled off the audio. The five masters
-in the shared `primoris` Drive folder are 320–535 MB each, `drive.google.com` is blocked
-by this environment's egress policy, and the Drive connector can only return a file
-inline as base64 — so the video bytes could not be reached to transcribe.
+The three problems are the ones the creatives in the shared `primoris` Drive folder
+teach, given directly rather than transcribed. The video bytes could not be read from
+here — the masters are 320–535 MB, `drive.google.com` is blocked by this environment's
+egress policy, and the Drive connector only returns files inline as base64.
 
-What the beats reproduce is the beat-by-beat spoken line, on-screen working and timing
-that the creatives were filmed from, recovered from `PRIMORIS_Cycle02_PreProduction.md`.
-Where a take improvised away from the script, these will differ.
-
-To replace them with real transcripts: drop an audio-only export beside each master in
-the same folder (`ffmpeg -i matei_area_fr.mp4 -vn -ac 1 -b:a 32k matei_area_fr.m4a` —
-about 150 KB for 30 seconds). That is small enough to come through the connector, and
-the beats can then be regenerated from the actual audio.
+So the *spoken* lines below are written to the problems, not lifted off the audio. If
+you want them to match the takes word for word, drop an audio-only export beside each
+master (`ffmpeg -i matei_area_fr.mp4 -vn -ac 1 -b:a 32k matei_area_fr.m4a`, about 150 KB
+for 30 seconds). That is small enough to come through the connector and the beats can be
+rewritten from the real audio.

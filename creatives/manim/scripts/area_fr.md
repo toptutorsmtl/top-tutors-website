@@ -1,17 +1,17 @@
-# R5 - The k² and k³ trap, similar figures
+# Find the dimensions — sides x + 2 and x − 2, area 21 m²
 
-Creative: `area` · language: `fr` · runtime: 28s
-On-screen opener: **figures semblables**
+Creative: `area` · language: `fr` · runtime: 34s
+On-screen opener: **trouve les dimensions**
 Signature line: **Le piège est là.** (fires once)
 
 | Beat | Spoken | On screen |
 | ---: | :--- | :--- |
-| 0:00 | *(no line)* | figure: similar_rects |
-| 0:02 | Les côtés ont doublé. Qu'est-ce qui arrive à l'aire ? | `k = 2` · `aire = ?` |
-| 0:05 | La plupart des gens disent : elle double. | `× 2` · strike `wrong` in red |
-| 0:08 | Compte les carrés. | figure step: grid |
-| 0:10 | *(no line)* | figure step: count |
-| 0:12 | Quatre fois. Le rapport est au carré. | `k² = 4` |
-| 0:16 | Et en trois dimensions, il est au cube. | clear the paper · figure: cubes · figure step: split · `k³ = 8` |
-| 0:21 | Le piège est là. Les côtés par k. Les aires par k au carré. Les volumes par k au cube. Un seul rapport, trois rôles différents. | TRAP card — un seul rapport, trois rôles différents · `k  ·  k²  ·  k³` |
-| 0:26 | *(no line)* | *(hold)* |
+| 0:00 | *(no line)* | figure: labelled_rect |
+| 0:03 | L'aire, c'est longueur fois largeur. Écris ça avant tout le reste. | `(x + 2)(x − 2) = 21` |
+| 0:07 | C'est une différence de carrés. Ne développe pas terme par terme. | `x² − 4 = 21` |
+| 0:11 | Donc x au carré vaut vingt-cinq. | `x² = 25` |
+| 0:14 | x vaut cinq. Et moins cinq — une racine carrée en donne deux. | `x = ± 5` |
+| 0:18 | Mais moins cinq donne un côté de moins trois mètres. Un rectangle ne peut pas avoir ça. | `x = −5  →  côté = −3 m` (red: −3 m) · strike `bad` in red |
+| 0:23 | Donc x vaut cinq. | `x = 5` · figure step: answer |
+| 0:27 | Le piège est là — x n'est pas la réponse. On demande les dimensions, pas x. | TRAP card — x n'est pas un côté. Termine la question. · `7 m × 3 m = 21 m²` · ring `ans` (confirm) |
+| 0:32 | *(no line)* | *(hold)* |

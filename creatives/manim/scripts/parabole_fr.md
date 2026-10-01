@@ -1,16 +1,17 @@
-# R2 - Completing the square, the vertex without the formula
+# Shade the region where f(x) ≥ x² − 3x + 2
 
-Creative: `parabole` · language: `fr` · runtime: 31s
-On-screen opener: **sommet sans formule**
+Creative: `parabole` · language: `fr` · runtime: 35s
+On-screen opener: **hachure la bonne région**
 Signature line: **Le piège est là.** (fires once)
 
 | Beat | Spoken | On screen |
 | ---: | :--- | :--- |
-| 0:00 | *(no line)* | `y = 2x² − 12x + 5` |
-| 0:02 | Tu veux le sommet. Tu n'as pas besoin de la formule. | `sommet = ?` |
-| 0:05 | Sors le deux des deux premiers termes seulement. | `y = 2(x² − 6x) + 5` |
-| 0:10 | La moitié de six, trois. Trois au carré, neuf. Mets-le dedans. | `2(x² − 6x + 9)` (red: 9) |
-| 0:15 | Le piège est là. Tu n'as pas ajouté neuf. Tu as ajouté deux fois neuf. | TRAP card — pas +9 — tu as ajouté 2 × 9 · `2 × 9 = 18` (red: 2 × 9 = 18) · ring `over` (mistake) |
-| 0:20 | Alors retire dix-huit. | `y = 2(x − 3)² + 5 − 18` |
-| 0:25 | Sommet, trois et moins treize. | `y = 2(x − 3)² − 13` · `(3 , −13)` |
-| 0:29 | *(no line)* | *(hold)* |
+| 0:00 | *(no line)* | `f(x) ≥ x² − 3x + 2` |
+| 0:02 | f de x, c'est la hauteur : donc tous les points sur la courbe ou au-dessus. | `y ≥ x² − 3x + 2` |
+| 0:06 | La frontière d'abord. Factorise pour trouver où elle coupe. | `(x − 1)(x − 2) = 0` |
+| 0:10 | Un et deux. | figure: parabola_region · figure step: roots |
+| 0:14 | Plus grand ou égal. La courbe fait partie de la région — trait plein, jamais pointillé. | figure step: solid |
+| 0:19 | Maintenant, quel côté ? Le symbole ne te le dit pas. Teste un point. Prends l'origine. | figure step: test · `0 ≥ 0² − 3(0) + 2` |
+| 0:24 | Zéro n'est pas plus grand que deux. Faux — l'origine est exclue, tu hachures l'autre côté. | `0 ≥ 2` (red: 0 ≥ 2) · strike `false` in red · figure step: shade |
+| 0:29 | Le piège est là — « plus grand » ne veut pas dire vers le haut de la page. Un point test règle ça à tous les coups. | TRAP card — le symbole ne choisit pas le côté — le point test, oui |
+| 0:33 | *(no line)* | *(hold)* |

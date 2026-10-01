@@ -1,23 +1,27 @@
 1
-00:00:02,000 --> 00:00:05,000
-Tu veux le sommet. Tu n'as pas besoin de la formule.
+00:00:02,000 --> 00:00:06,000
+f de x, c'est la hauteur : donc tous les points sur la courbe ou au-dessus.
 
 2
-00:00:05,000 --> 00:00:10,000
-Sors le deux des deux premiers termes seulement.
+00:00:06,000 --> 00:00:10,000
+La frontière d'abord. Factorise pour trouver où elle coupe.
 
 3
-00:00:10,000 --> 00:00:15,000
-La moitié de six, trois. Trois au carré, neuf. Mets-le dedans.
+00:00:10,000 --> 00:00:14,000
+Un et deux.
 
 4
-00:00:15,000 --> 00:00:20,000
-Le piège est là. Tu n'as pas ajouté neuf. Tu as ajouté deux fois neuf.
+00:00:14,000 --> 00:00:19,000
+Plus grand ou égal. La courbe fait partie de la région — trait plein, jamais pointillé.
 
 5
-00:00:20,000 --> 00:00:25,000
-Alors retire dix-huit.
+00:00:19,000 --> 00:00:24,000
+Maintenant, quel côté ? Le symbole ne te le dit pas. Teste un point. Prends l'origine.
 
 6
-00:00:25,000 --> 00:00:31,000
-Sommet, trois et moins treize.
+00:00:24,000 --> 00:00:29,000
+Zéro n'est pas plus grand que deux. Faux — l'origine est exclue, tu hachures l'autre côté.
+
+7
+00:00:29,000 --> 00:00:35,000
+Le piège est là — « plus grand » ne veut pas dire vers le haut de la page. Un point test règle ça à tous les coups.

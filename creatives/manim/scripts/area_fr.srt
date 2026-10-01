@@ -1,23 +1,27 @@
 1
-00:00:02,000 --> 00:00:05,000
-Les côtés ont doublé. Qu'est-ce qui arrive à l'aire ?
+00:00:03,000 --> 00:00:07,000
+L'aire, c'est longueur fois largeur. Écris ça avant tout le reste.
 
 2
-00:00:05,000 --> 00:00:08,000
-La plupart des gens disent : elle double.
+00:00:07,000 --> 00:00:11,000
+C'est une différence de carrés. Ne développe pas terme par terme.
 
 3
-00:00:08,000 --> 00:00:12,000
-Compte les carrés.
+00:00:11,000 --> 00:00:14,000
+Donc x au carré vaut vingt-cinq.
 
 4
-00:00:12,000 --> 00:00:16,000
-Quatre fois. Le rapport est au carré.
+00:00:14,000 --> 00:00:18,000
+x vaut cinq. Et moins cinq — une racine carrée en donne deux.
 
 5
-00:00:16,000 --> 00:00:21,000
-Et en trois dimensions, il est au cube.
+00:00:18,000 --> 00:00:23,000
+Mais moins cinq donne un côté de moins trois mètres. Un rectangle ne peut pas avoir ça.
 
 6
-00:00:21,000 --> 00:00:28,000
-Le piège est là. Les côtés par k. Les aires par k au carré. Les volumes par k au cube. Un seul rapport, trois rôles différents.
+00:00:23,000 --> 00:00:27,000
+Donc x vaut cinq.
+
+7
+00:00:27,000 --> 00:00:34,000
+Le piège est là — x n'est pas la réponse. On demande les dimensions, pas x.

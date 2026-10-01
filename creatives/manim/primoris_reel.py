@@ -73,7 +73,9 @@ STACK_TOP = 4.6  # y of the first line of working
 LINE_GAP = 1.28
 MAX_W = 7.7  # keep every line inside the safe area
 TAG_Y = 6.7
-TRAP_Y = -6.0
+TRAP_Y = -6.0          # the trap card floats up if the working runs long
+TRAP_TOP = -4.5        # working must stay above this
+DIAGRAM_RESERVE = 3.7  # vertical room a figure is assumed to want
 
 TRAP_PHRASE = {"en": "Here's the trap.", "fr": "Le piège est là."}
 
@@ -213,154 +215,111 @@ def _rect(w, h, color=INK, width=4.0):
     return Rectangle(width=w, height=h, color=color, stroke_width=width)
 
 
-def similar_rects(unit=0.95, k=2):
-    """R5: a small rectangle and its k-scaled copy, with a grid that can be revealed.
+def labelled_rect(width_label="x + 2", height_label="x − 2", area_label="A = 21 m²",
+                  solved_width="7 m", solved_height="3 m"):
+    """A rectangle carrying algebraic side labels, which can resolve to numbers.
 
-    Returns (group, steps) where steps maps a step name to a list of mobjects to
-    fade in — the engine reveals them one diagram_step at a time.
+    steps: 'answer' swaps the expressions for the solved dimensions.
     """
-    small = _rect(unit * 1.5, unit)
-    big = _rect(unit * 1.5 * k, unit * k)
-    small.next_to(big, LEFT, buff=0.7).align_to(big, DOWN)
+    box = _rect(4.2, 1.9)
+    w_lbl = Text(width_label, font=FONT, font_size=40, color=INK)
+    h_lbl = Text(height_label, font=FONT, font_size=40, color=INK)
+    a_lbl = Text(area_label, font=FONT, font_size=38, color=MUTED)
+    w_lbl.next_to(box, DOWN, buff=0.25)
+    h_lbl.next_to(box, RIGHT, buff=0.3)
+    a_lbl.move_to(box)
 
-    small_lbl = Text("1", font=FONT, font_size=34, color=MUTED).move_to(small)
-    grid = VGroup()
-    for i in range(1, k):
-        grid.add(
-            Line(
-                big.get_corner(DOWN + LEFT) + RIGHT * (big.width * i / k),
-                big.get_corner(UP + LEFT) + RIGHT * (big.width * i / k),
-                color=MUTED,
-                stroke_width=2.5,
-            )
-        )
-        grid.add(
-            Line(
-                big.get_corner(DOWN + LEFT) + UP * (big.height * i / k),
-                big.get_corner(DOWN + RIGHT) + UP * (big.height * i / k),
-                color=MUTED,
-                stroke_width=2.5,
-            )
-        )
-    counts = VGroup()
-    for row in range(k):
-        for col in range(k):
-            cell = Text(
-                str(row * k + col + 1), font=FONT, font_size=30, color=MUTED
-            )
-            cell.move_to(
-                big.get_corner(DOWN + LEFT)
-                + RIGHT * big.width * (col + 0.5) / k
-                + UP * big.height * (row + 0.5) / k
-            )
-            counts.add(cell)
+    w_ans = Text(solved_width, font=FONT, font_size=42, color=INK).move_to(w_lbl)
+    h_ans = Text(solved_height, font=FONT, font_size=42, color=INK).move_to(h_lbl)
 
-    group = VGroup(small, small_lbl, big, grid, counts)
-    group.set(width=MAX_W * 0.92)
-    steps = {"grid": [grid], "count": [counts]}
-    for m in list(grid) + list(counts):
-        m.set_opacity(0)
-    return group, steps
+    group = VGroup(box, w_lbl, h_lbl, a_lbl, w_ans, h_ans)
+    group.set(width=MAX_W * 0.9)
+    _hide(w_ans, h_ans)
+    return group, {"answer": [w_ans, h_ans], "_hide_on_answer": [w_lbl, h_lbl]}
 
 
-def _iso_cube(s, color=INK, width=3.5):
-    """Flat isometric cube outline of side s."""
-    dx, dy = s * 0.42, s * 0.26
-    front = Polygon(
-        [0, 0, 0], [s, 0, 0], [s, s, 0], [0, s, 0], color=color, stroke_width=width
-    )
-    top = Polygon(
-        [0, s, 0], [s, s, 0], [s + dx, s + dy, 0], [dx, s + dy, 0],
-        color=color, stroke_width=width,
-    )
-    side = Polygon(
-        [s, 0, 0], [s + dx, dy, 0], [s + dx, s + dy, 0], [s, s, 0],
-        color=color, stroke_width=width,
-    )
-    return VGroup(front, top, side)
+def _hide(*mobs):
+    """Hide a mobject for later reveal, remembering the opacity it wants back.
 
-
-def cubes(unit=1.0, k=2):
-    """R5: one cube beside a k-scaled cube, which splits into k**3 unit cubes.
-
-    The split is drawn as division lines across the three visible faces rather
-    than as k**3 stacked outlines — overlapping outlines read as a solid blob at
-    phone size, division lines read as "eight".
+    set_opacity(1) would flatten a translucent fill, so the reveal has to restore
+    the value the builder chose, not assume 1.
     """
-    one = _iso_cube(unit)
-    s = unit * k
-    big = _iso_cube(s, width=4.5)
-    dx, dy = s * 0.42, s * 0.26
-
-    cuts = VGroup()
-    for i in range(1, k):
-        f = s * i / k
-        # front face
-        cuts.add(Line([f, 0, 0], [f, s, 0], color=MUTED, stroke_width=2.5))
-        cuts.add(Line([0, f, 0], [s, f, 0], color=MUTED, stroke_width=2.5))
-        # top face
-        cuts.add(
-            Line([f, s, 0], [f + dx, s + dy, 0], color=MUTED, stroke_width=2.5)
-        )
-        cuts.add(
-            Line(
-                [dx * i / k, s + dy * i / k, 0],
-                [s + dx * i / k, s + dy * i / k, 0],
-                color=MUTED,
-                stroke_width=2.5,
-            )
-        )
-        # right face
-        cuts.add(
-            Line([s, f, 0], [s + dx, f + dy, 0], color=MUTED, stroke_width=2.5)
-        )
-        cuts.add(
-            Line(
-                [s + dx * i / k, dy * i / k, 0],
-                [s + dx * i / k, s + dy * i / k, 0],
-                color=MUTED,
-                stroke_width=2.5,
-            )
-        )
-    cuts.move_to(big, aligned_edge=DOWN + LEFT)
-
-    one_lbl = Text("1", font=FONT, font_size=30, color=MUTED)
-    eight_lbl = Text("8", font=FONT, font_size=40, color=MUTED)
-    big_group = VGroup(big, cuts)
-    one.next_to(big_group, LEFT, buff=0.9).align_to(big_group, DOWN)
-    one_lbl.next_to(one, DOWN, buff=0.22)
-    eight_lbl.next_to(big_group, DOWN, buff=0.22)
-
-    group = VGroup(one, one_lbl, big_group, eight_lbl)
-    group.set(width=MAX_W * 0.86)
-    for m in list(cuts) + [eight_lbl]:
+    for m in mobs:
+        m._reveal_opacity = m.get_fill_opacity() if m.get_fill_opacity() else 1.0
         m.set_opacity(0)
-    return group, {"split": [cuts, eight_lbl]}
 
 
-def parabola_touching(width=6.0):
-    """R3 reference figure: a parabola sitting on the x-axis (used if you cut the
-    discriminant creative). Kept here so the registry already covers it."""
-    axis = Line(LEFT * width / 2, RIGHT * width / 2, color=MUTED, stroke_width=2.5)
-    pts = []
-    for i in range(61):
-        x = -1.5 + 3.0 * i / 60
-        pts.append([x * (width / 6), 0.55 * (x * x) * (width / 6), 0])
-    curve = VGroup(
+def parabola_region(a=1.0, b=-3.0, c=2.0, x_lo=-0.6, x_hi=3.6):
+    """Axes + y = ax² + bx + c, with steps for the dashed/solid boundary, the
+    test point at the origin, and the shaded solution region.
+
+    Built from primitives rather than Axes.plot so nothing reaches for LaTeX.
+    """
+    sx, sy = 1.05, 0.42
+    y_lo, y_hi = -1.2, 3.6
+
+    def P(x, y):
+        return [x * sx, y * sy, 0]
+
+    def f(x):
+        return a * x * x + b * x + c
+
+    x_axis = Line(P(x_lo, 0), P(x_hi, 0), color=MUTED, stroke_width=2.5)
+    y_axis = Line(P(0, y_lo), P(0, y_hi), color=MUTED, stroke_width=2.5)
+
+    xs = [x_lo + (x_hi - x_lo) * i / 80 for i in range(81)]
+    pts = [P(x, min(max(f(x), y_lo), y_hi)) for x in xs]
+    solid = VGroup(
         *[
-            Line(pts[i], pts[i + 1], color=INK, stroke_width=4.0)
+            Line(pts[i], pts[i + 1], color=INK, stroke_width=5.0)
             for i in range(len(pts) - 1)
         ]
     )
-    group = VGroup(axis, curve)
-    group.set(width=min(group.width, MAX_W))
-    return group, {}
+    # a dashed copy of the same curve: the wrong boundary for a non-strict inequality
+    dashed = VGroup(
+        *[
+            Line(pts[i], pts[i + 1], color=INK, stroke_width=5.0)
+            for i in range(0, len(pts) - 1)
+            if (i // 3) % 2 == 0
+        ]
+    )
+
+    roots = VGroup()
+    for r, label in ((1, "1"), (2, "2")):
+        dot = Rectangle(width=0.13, height=0.13, color=INK, stroke_width=0)
+        dot.set_fill(INK, opacity=1).move_to(P(r, 0))
+        txt = Text(label, font=FONT, font_size=28, color=MUTED)
+        txt.next_to(dot, DOWN, buff=0.18)
+        roots.add(dot, txt)
+
+    origin_dot = Rectangle(width=0.17, height=0.17, color=RED, stroke_width=0)
+    origin_dot.set_fill(RED, opacity=1).move_to(P(0, 0))
+    origin_lbl = Text("(0 , 0)", font=FONT, font_size=26, color=RED)
+    origin_lbl.next_to(origin_dot, LEFT, buff=0.22)
+    test = VGroup(origin_dot, origin_lbl)
+
+    # region on and above the curve
+    shade_pts = [P(x, min(max(f(x), y_lo), y_hi)) for x in xs]
+    shade = Polygon(
+        *shade_pts, P(x_hi, y_hi), P(x_lo, y_hi), color=INK, stroke_width=0
+    )
+    shade.set_fill(INK, opacity=0.13)
+
+    group = VGroup(shade, x_axis, y_axis, dashed, solid, roots, test)
+    group.set(width=MAX_W * 0.88)
+    _hide(shade, solid, test, *roots)
+    return group, {
+        "roots": [roots],
+        "solid": [solid],
+        "test": [test],
+        "shade": [shade],
+        "_hide_on_solid": [dashed],
+    }
 
 
 DIAGRAMS: dict[str, Callable[..., tuple[VGroup, dict]]] = {
-    "similar_rects": similar_rects,
-    "cubes": cubes,
-    "parabola_touching": parabola_touching,
+    "labelled_rect": labelled_rect,
+    "parabola_region": parabola_region,
 }
 
 
@@ -369,231 +328,305 @@ DIAGRAMS: dict[str, Callable[..., tuple[VGroup, dict]]] = {
 # ---------------------------------------------------------------------------
 
 CREATIVES: dict[str, dict] = {
-    # matei_ppm_fr.mp4 / matei_ppm_en.mp4  ->  R1, produit-somme factoring
+    # matei_ppm_fr.mp4 / matei_ppm_en.mp4
+    #   "Convert 0.72 g/L to ppm"
     "ppm": {
-        "title": "R1 - Factoring when a != 1 (produit-somme)",
-        "tag": {"fr": "produit-somme", "en": "factor it properly"},
+        "title": "Convert 0.72 g/L to ppm",
+        "tag": {"fr": "conversion en ppm", "en": "convert to ppm"},
         "beats": [
-            Beat(0.0, "", [line("6x² + 11x − 10", key="q", size=62)]),
+            Beat(
+                0.0,
+                "",
+                [
+                    line(
+                        {"fr": "0,72 g/L  →  ppm ?", "en": "0.72 g/L  →  ppm ?"},
+                        key="q",
+                        size=58,
+                    )
+                ],
+            ),
             Beat(
                 2.0,
                 {
-                    "en": "Most people go straight to two brackets and guess.",
-                    "fr": "La plupart des gens écrivent deux parenthèses et devinent.",
+                    "en": "Most people see 'per million' and just multiply by ten to the six.",
+                    "fr": "La plupart des gens voient « par million » et multiplient par dix puissance six.",
                 },
-                [line("(6x    )(x    ) ?", key="guess"), strike("guess")],
+                [
+                    line(
+                        {"fr": "0,72 × 10⁶ = 720 000", "en": "0.72 × 10⁶ = 720 000"},
+                        key="wrong",
+                        size=52,
+                    ),
+                    strike("wrong"),
+                ],
             ),
             Beat(
-                5.0,
+                6.0,
                 {
-                    "en": "Don't guess. Multiply the ends.",
-                    "fr": "Ne devine pas. Multiplie les extrêmes.",
+                    "en": "ppm is a mass ratio. You need the mass of the solution too.",
+                    "fr": "Le ppm est un rapport de masses. Il te faut aussi la masse de la solution.",
                 },
-                [line("6 × (−10) = −60", key="ends")],
+                [
+                    line(
+                        {
+                            "fr": "ppm = m(soluté) / m(solution) × 10⁶",
+                            "en": "ppm = m(solute) / m(solution) × 10⁶",
+                        },
+                        key="def",
+                        size=42,
+                    )
+                ],
             ),
             Beat(
-                9.0,
+                11.0,
                 {
-                    "en": "Now find two numbers that multiply to negative sixty and add to eleven.",
-                    "fr": "Trouve deux nombres qui donnent −60 en produit et 11 en somme.",
+                    "en": "One litre of water weighs a thousand grams. That's the piece nobody writes down.",
+                    "fr": "Un litre d'eau pèse mille grammes. C'est le morceau que personne n'écrit.",
                 },
-                [line("× −60     + 11", key="ps", size=50)],
-            ),
-            Beat(
-                13.0,
-                {"en": "Fifteen and minus four.", "fr": "Quinze et moins quatre."},
-                [line("15 ,  −4", key="pair")],
+                [
+                    line(
+                        {"fr": "1 L d'eau  =  1000 g", "en": "1 L of water  =  1000 g"},
+                        key="dens",
+                        size=48,
+                    )
+                ],
             ),
             Beat(
                 16.0,
                 {
-                    "en": "Split the middle term. Don't touch anything else.",
-                    "fr": "Décompose le terme du milieu. Ne touche à rien d'autre.",
-                },
-                [line("6x² + 15x − 4x − 10", key="split", size=50)],
-            ),
-            Beat(
-                21.0,
-                {
-                    "en": "Group in pairs. Factor each pair.",
-                    "fr": "Regroupe par paires. Factorise chaque paire.",
-                },
-                [line("3x(2x + 5) − 2(2x + 5)", key="group", size=50)],
-            ),
-            Beat(
-                26.0,
-                {
-                    "en": "Same bracket both times. That's how you know it worked.",
-                    "fr": "La même parenthèse deux fois. C'est la preuve que ça marche.",
-                },
-                [circle("group", role="confirm")],
-            ),
-            Beat(
-                29.0,
-                {
-                    "en": "Here's the trap - if the brackets don't match, your two numbers were wrong, not your method.",
-                    "fr": "Le piège est là — si les parenthèses ne sont pas identiques, ce sont tes deux nombres qui sont faux, pas ta méthode.",
+                    "en": "Nought point seven two, over a thousand.",
+                    "fr": "Zéro virgule sept deux, sur mille.",
                 },
                 [
-                    trap(
+                    line(
                         {
-                            "en": "brackets don't match → wrong numbers, not wrong method",
-                            "fr": "parenthèses différentes → mauvais nombres, pas mauvaise méthode",
-                        }
-                    ),
-                    line("(3x − 2)(2x + 5)", key="ans", size=58),
-                ],
-            ),
-            Beat(33.0, "", []),
-        ],
-        "end": 35.0,
-    },
-    # matei_parabole_fr.mp4 / matei_parabole_en_hook_1_short.mp4
-    #   ->  R2, completing the square, vertex of the parabola
-    "parabole": {
-        "title": "R2 - Completing the square, the vertex without the formula",
-        "tag": {"fr": "sommet sans formule", "en": "vertex without the formula"},
-        "beats": [
-            Beat(0.0, "", [line("y = 2x² − 12x + 5", key="q", size=60)]),
-            Beat(
-                2.0,
-                {
-                    "en": "You want the vertex. You don't need the formula.",
-                    "fr": "Tu veux le sommet. Tu n'as pas besoin de la formule.",
-                },
-                [line({"fr": "sommet = ?", "en": "vertex = ?"}, key="goal", size=48)],
-            ),
-            Beat(
-                5.0,
-                {
-                    "en": "Pull the two out of the first two terms only.",
-                    "fr": "Sors le deux des deux premiers termes seulement.",
-                },
-                [line("y = 2(x² − 6x) + 5", key="pull", size=52)],
-            ),
-            Beat(
-                10.0,
-                {
-                    "en": "Half of six is three. Three squared is nine. Put it in.",
-                    "fr": "La moitié de six, trois. Trois au carré, neuf. Mets-le dedans.",
-                },
-                [line("2(x² − 6x + [[9]])", key="add", size=52)],
-            ),
-            Beat(
-                15.0,
-                {
-                    "en": "Here's the trap. You didn't add nine. You added two times nine.",
-                    "fr": "Le piège est là. Tu n'as pas ajouté neuf. Tu as ajouté deux fois neuf.",
-                },
-                [
-                    trap(
-                        {
-                            "en": "not +9 — you added 2 × 9",
-                            "fr": "pas +9 — tu as ajouté 2 × 9",
-                        }
-                    ),
-                    line("[[2 × 9 = 18]]", key="over", size=52),
-                    circle("over", role="mistake"),
+                            "fr": "0,72 / 1000 = 0,00072",
+                            "en": "0.72 / 1000 = 0.00072",
+                        },
+                        key="ratio",
+                        size=50,
+                    )
                 ],
             ),
             Beat(
                 20.0,
                 {
-                    "en": "So take eighteen back out.",
-                    "fr": "Alors retire dix-huit.",
+                    "en": "Times ten to the six. Seven hundred and twenty.",
+                    "fr": "Fois dix puissance six. Sept cent vingt.",
                 },
-                [line("y = 2(x − 3)² + 5 − 18", key="back", size=50)],
+                [
+                    line(
+                        {
+                            "fr": "0,00072 × 10⁶ = 720",
+                            "en": "0.00072 × 10⁶ = 720",
+                        },
+                        key="ans",
+                        size=54,
+                    ),
+                    circle("ans", role="confirm"),
+                ],
             ),
             Beat(
                 25.0,
                 {
-                    "en": "Vertex, three and minus thirteen.",
-                    "fr": "Sommet, trois et moins treize.",
-                },
-                [
-                    line("y = 2(x − 3)² − 13", key="vf", size=52),
-                    line("(3 , −13)", key="ans", size=60),
-                ],
-            ),
-            Beat(29.0, "", []),
-        ],
-        "end": 31.0,
-    },
-    # matei_area_fr.mp4  ->  R5, the k^2 and k^3 trap
-    "area": {
-        "title": "R5 - The k² and k³ trap, similar figures",
-        "tag": {"fr": "figures semblables", "en": "similar figures"},
-        "beats": [
-            Beat(0.0, "", [diagram("similar_rects", key="fig", run_time=1.4)]),
-            Beat(
-                2.0,
-                {
-                    "en": "The sides doubled. What happened to the area?",
-                    "fr": "Les côtés ont doublé. Qu'est-ce qui arrive à l'aire ?",
-                },
-                [
-                    line("k = 2", key="k", size=56),
-                    line({"fr": "aire = ?", "en": "area = ?"}, key="goal", size=48),
-                ],
-            ),
-            Beat(
-                5.0,
-                {
-                    "en": "Most people say doubled.",
-                    "fr": "La plupart des gens disent : elle double.",
-                },
-                [line("× 2", key="wrong", size=56), strike("wrong")],
-            ),
-            Beat(
-                8.0,
-                {"en": "Count the squares.", "fr": "Compte les carrés."},
-                [diagram_step("fig", "grid", run_time=0.8)],
-            ),
-            Beat(
-                10.0,
-                "",
-                [diagram_step("fig", "count", run_time=1.0)],
-            ),
-            Beat(
-                12.0,
-                {
-                    "en": "Four times. The ratio squares.",
-                    "fr": "Quatre fois. Le rapport est au carré.",
-                },
-                [line("k² = 4", key="k2", size=58)],
-            ),
-            Beat(
-                16.0,
-                {
-                    "en": "And in three dimensions it cubes.",
-                    "fr": "Et en trois dimensions, il est au cube.",
-                },
-                [
-                    clear(run_time=0.4),
-                    diagram("cubes", key="cube", run_time=1.1),
-                    diagram_step("cube", "split", run_time=0.9),
-                    line("k³ = 8", key="k3", size=58),
-                ],
-            ),
-            Beat(
-                21.0,
-                {
-                    "en": "Here's the trap. Sides scale by k. Areas by k squared. Volumes by k cubed. One ratio, three different jobs.",
-                    "fr": "Le piège est là. Les côtés par k. Les aires par k au carré. Les volumes par k au cube. Un seul rapport, trois rôles différents.",
+                    "en": "Here's the trap — ppm is milligrams per litre. Convert the grams, don't scale the litres.",
+                    "fr": "Le piège est là — le ppm, c'est des milligrammes par litre. Convertis les grammes, ne touche pas aux litres.",
                 },
                 [
                     trap(
                         {
-                            "en": "one ratio, three different jobs",
-                            "fr": "un seul rapport, trois rôles différents",
+                            "en": "ppm = mg/L — so g/L × 1000, done",
+                            "fr": "ppm = mg/L, donc g/L × 1000 suffit",
                         }
                     ),
-                    line("k  ·  k²  ·  k³", key="all", size=62),
+                    line(
+                        {
+                            "fr": "720 ppm = 720 mg/L",
+                            "en": "720 ppm = 720 mg/L",
+                        },
+                        key="same",
+                        size=50,
+                    ),
                 ],
             ),
-            Beat(26.0, "", []),
+            Beat(30.0, "", []),
         ],
-        "end": 28.0,
+        "end": 32.0,
+    },
+    # matei_area_fr.mp4
+    #   "Find the dimensions of the rectangle with sides x+2 and x-2 and area 21 m2"
+    "area": {
+        "title": "Find the dimensions — sides x + 2 and x − 2, area 21 m²",
+        "tag": {"fr": "trouve les dimensions", "en": "find the dimensions"},
+        "beats": [
+            Beat(
+                0.0,
+                "",
+                [
+                    diagram(
+                        "labelled_rect",
+                        key="fig",
+                        run_time=1.4,
+                        area_label={"fr": "A = 21 m²", "en": "A = 21 m²"},
+                    )
+                ],
+            ),
+            Beat(
+                3.0,
+                {
+                    "en": "Area is length times width. Write that down before anything else.",
+                    "fr": "L'aire, c'est longueur fois largeur. Écris ça avant tout le reste.",
+                },
+                [line("(x + 2)(x − 2) = 21", key="eq", size=52)],
+            ),
+            Beat(
+                7.0,
+                {
+                    "en": "That's a difference of squares. Don't expand it the long way.",
+                    "fr": "C'est une différence de carrés. Ne développe pas terme par terme.",
+                },
+                [line("x² − 4 = 21", key="dos", size=52)],
+            ),
+            Beat(
+                11.0,
+                {"en": "So x squared is twenty-five.", "fr": "Donc x au carré vaut vingt-cinq."},
+                [line("x² = 25", key="sq", size=54)],
+            ),
+            Beat(
+                14.0,
+                {
+                    "en": "x is five. And minus five — a square root gives you both.",
+                    "fr": "x vaut cinq. Et moins cinq — une racine carrée en donne deux.",
+                },
+                [line("x = ± 5", key="pm", size=54)],
+            ),
+            Beat(
+                18.0,
+                {
+                    "en": "But minus five makes a side of minus three metres. A rectangle can't have that.",
+                    "fr": "Mais moins cinq donne un côté de moins trois mètres. Un rectangle ne peut pas avoir ça.",
+                },
+                [
+                    line(
+                        {
+                            "fr": "x = −5  →  côté = [[−3 m]]",
+                            "en": "x = −5  →  side = [[−3 m]]",
+                        },
+                        key="bad",
+                        size=46,
+                    ),
+                    strike("bad"),
+                ],
+            ),
+            Beat(
+                23.0,
+                {"en": "So x is five.", "fr": "Donc x vaut cinq."},
+                [
+                    line("x = 5", key="x", size=54),
+                    diagram_step("fig", "answer", run_time=0.8),
+                ],
+            ),
+            Beat(
+                27.0,
+                {
+                    "en": "Here's the trap — x is not the answer. They asked for the dimensions, not for x.",
+                    "fr": "Le piège est là — x n'est pas la réponse. On demande les dimensions, pas x.",
+                },
+                [
+                    trap(
+                        {
+                            "en": "x is not a side. Finish the question.",
+                            "fr": "x n'est pas un côté. Termine la question.",
+                        }
+                    ),
+                    line("7 m × 3 m = 21 m²", key="ans", size=52),
+                    circle("ans", role="confirm"),
+                ],
+            ),
+            Beat(32.0, "", []),
+        ],
+        "end": 34.0,
+    },
+    # matei_parabole_fr.mp4 / matei_parabole_en_hook_1_short.mp4
+    #   "Shade the region where f(x) >= x^2 - 3x + 2"
+    "parabole": {
+        "title": "Shade the region where f(x) ≥ x² − 3x + 2",
+        "tag": {"fr": "hachure la bonne région", "en": "shade the correct region"},
+        "beats": [
+            Beat(0.0, "", [line("f(x) ≥ x² − 3x + 2", key="q", size=54)]),
+            Beat(
+                2.0,
+                {
+                    "en": "f of x is the height, so this is every point on or above the curve.",
+                    "fr": "f de x, c'est la hauteur : donc tous les points sur la courbe ou au-dessus.",
+                },
+                [line("y ≥ x² − 3x + 2", key="read", size=50)],
+            ),
+            Beat(
+                6.0,
+                {
+                    "en": "Boundary first. Factor it to find where it crosses.",
+                    "fr": "La frontière d'abord. Factorise pour trouver où elle coupe.",
+                },
+                [line("(x − 1)(x − 2) = 0", key="fac", size=48)],
+            ),
+            Beat(
+                10.0,
+                {"en": "One and two.", "fr": "Un et deux."},
+                [
+                    diagram("parabola_region", key="fig", run_time=1.4),
+                    diagram_step("fig", "roots", run_time=0.6),
+                ],
+            ),
+            Beat(
+                14.0,
+                {
+                    "en": "Greater than or equal. The curve itself is in the region — solid, never dashed.",
+                    "fr": "Plus grand ou égal. La courbe fait partie de la région — trait plein, jamais pointillé.",
+                },
+                [diagram_step("fig", "solid", run_time=0.8)],
+            ),
+            Beat(
+                19.0,
+                {
+                    "en": "Now, which side? The symbol does not tell you. Test a point. Take the origin.",
+                    "fr": "Maintenant, quel côté ? Le symbole ne te le dit pas. Teste un point. Prends l'origine.",
+                },
+                [
+                    diagram_step("fig", "test", run_time=0.6),
+                    line("0 ≥ 0² − 3(0) + 2", key="sub", size=44),
+                ],
+            ),
+            Beat(
+                24.0,
+                {
+                    "en": "Zero is not greater than two. False — so the origin is out, and you shade the other side.",
+                    "fr": "Zéro n'est pas plus grand que deux. Faux — l'origine est exclue, tu hachures l'autre côté.",
+                },
+                [
+                    line("[[0 ≥ 2]]", key="false", size=50),
+                    strike("false"),
+                    diagram_step("fig", "shade", run_time=1.0),
+                ],
+            ),
+            Beat(
+                29.0,
+                {
+                    "en": "Here's the trap — 'greater than' does not mean up the page. One test point settles it every time.",
+                    "fr": "Le piège est là — « plus grand » ne veut pas dire vers le haut de la page. Un point test règle ça à tous les coups.",
+                },
+                [
+                    trap(
+                        {
+                            "en": "the symbol picks no side — the test point does",
+                            "fr": "le symbole ne choisit pas le côté — le point test, oui",
+                        }
+                    )
+                ],
+            ),
+            Beat(33.0, "", []),
+        ],
+        "end": 35.0,
     },
 }
 
@@ -614,6 +647,7 @@ class PrimorisReel(Scene):
         self.camera.background_color = PAPER
         self.spec = CREATIVES[self.CREATIVE]
         self.lang = self.LANG
+        self.line_gap = self._fit_line_gap()
         self.keyed: dict[str, Any] = {}
         self.diagram_steps: dict[str, dict] = {}
         self.stack: list[Any] = []
@@ -622,6 +656,29 @@ class PrimorisReel(Scene):
         self.subtitle = None
         self.clock = 0.0
         self._trap_fired = False
+
+    # -- layout -----------------------------------------------------------
+
+    def _fit_line_gap(self):
+        """Tighten the line gap so the longest creative still clears the trap card.
+
+        A creative that outgrows the frame is a layout bug the renderer should
+        absorb, not something the author has to count by hand. clear() resets the
+        run, so only the deepest stretch between clears matters.
+        """
+        lines = diagrams = run_lines = run_diagrams = 0
+        for beat in self.spec["beats"]:
+            for op in beat.ops:
+                if op["op"] == "clear":
+                    run_lines = run_diagrams = 0
+                elif op["op"] == "line":
+                    run_lines += 1
+                elif op["op"] == "diagram":
+                    run_diagrams += 1
+                lines = max(lines, run_lines)
+                diagrams = max(diagrams, run_diagrams)
+        usable = STACK_TOP - TRAP_TOP - DIAGRAM_RESERVE * diagrams
+        return min(LINE_GAP, usable / max(lines, 1))
 
     # -- helpers ----------------------------------------------------------
 
@@ -640,7 +697,7 @@ class PrimorisReel(Scene):
 
     def _place_next(self, mob):
         mob.move_to([0, self.next_y, 0])
-        self.next_y -= LINE_GAP
+        self.next_y -= self.line_gap
 
     def _play(self, *anims, run_time=1.0):
         self.play(*anims, run_time=run_time)
@@ -718,7 +775,12 @@ class PrimorisReel(Scene):
 
     def _op_diagram(self, op):
         builder = DIAGRAMS[op["name"]]
-        group, steps = builder(**op["kwargs"])
+        # figure labels may be bilingual too, same as any other on-screen word
+        kwargs = {
+            k: localize(v, self.lang) if isinstance(v, (str, dict)) else v
+            for k, v in op["kwargs"].items()
+        }
+        group, steps = builder(**kwargs)
         group.move_to([0, self.next_y - group.height / 2 - 0.25, 0])
         self.next_y = group.get_bottom()[1] - 0.85
         key = op["key"] or op["name"]
@@ -729,11 +791,17 @@ class PrimorisReel(Scene):
 
     def _op_diagram_step(self, op):
         steps = self.diagram_steps.get(op["key"], {})
-        mobs = steps.get(op["step"], [])
-        if not mobs:
+        show = steps.get(op["step"], [])
+        hide = steps.get(f"_hide_on_{op['step']}", [])
+        if not show and not hide:
             return
         self._play(
-            *[m.animate.set_opacity(1) for m in mobs], run_time=op["run_time"]
+            *[
+                m.animate.set_opacity(getattr(m, "_reveal_opacity", 1.0))
+                for m in show
+            ],
+            *[FadeOut(m) for m in hide],
+            run_time=op["run_time"],
         )
 
     def _op_trap(self, op):
@@ -755,7 +823,8 @@ class PrimorisReel(Scene):
         if detail.width > MAX_W:
             detail.scale_to_fit_width(MAX_W)
         group = VGroup(phrase, detail).arrange(DOWN, buff=0.30)
-        group.move_to([0, TRAP_Y, 0])
+        y = min(TRAP_Y, self.next_y - group.height / 2 - 0.45)
+        group.move_to([0, max(y, -7.4 + group.height / 2), 0])
         self.trap_group = group
         self._play(FadeIn(group, shift=UP * 0.2), run_time=op["run_time"])
 

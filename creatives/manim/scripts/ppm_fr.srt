@@ -1,31 +1,23 @@
 1
-00:00:02,000 --> 00:00:05,000
-La plupart des gens écrivent deux parenthèses et devinent.
+00:00:02,000 --> 00:00:06,000
+La plupart des gens voient « par million » et multiplient par dix puissance six.
 
 2
-00:00:05,000 --> 00:00:09,000
-Ne devine pas. Multiplie les extrêmes.
+00:00:06,000 --> 00:00:11,000
+Le ppm est un rapport de masses. Il te faut aussi la masse de la solution.
 
 3
-00:00:09,000 --> 00:00:13,000
-Trouve deux nombres qui donnent −60 en produit et 11 en somme.
+00:00:11,000 --> 00:00:16,000
+Un litre d'eau pèse mille grammes. C'est le morceau que personne n'écrit.
 
 4
-00:00:13,000 --> 00:00:16,000
-Quinze et moins quatre.
+00:00:16,000 --> 00:00:20,000
+Zéro virgule sept deux, sur mille.
 
 5
-00:00:16,000 --> 00:00:21,000
-Décompose le terme du milieu. Ne touche à rien d'autre.
+00:00:20,000 --> 00:00:25,000
+Fois dix puissance six. Sept cent vingt.
 
 6
-00:00:21,000 --> 00:00:26,000
-Regroupe par paires. Factorise chaque paire.
-
-7
-00:00:26,000 --> 00:00:29,000
-La même parenthèse deux fois. C'est la preuve que ça marche.
-
-8
-00:00:29,000 --> 00:00:35,000
-Le piège est là — si les parenthèses ne sont pas identiques, ce sont tes deux nombres qui sont faux, pas ta méthode.
+00:00:25,000 --> 00:00:32,000
+Le piège est là — le ppm, c'est des milligrammes par litre. Convertis les grammes, ne touche pas aux litres.

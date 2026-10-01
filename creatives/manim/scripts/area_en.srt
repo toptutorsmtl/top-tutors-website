@@ -1,23 +1,27 @@
 1
-00:00:02,000 --> 00:00:05,000
-The sides doubled. What happened to the area?
+00:00:03,000 --> 00:00:07,000
+Area is length times width. Write that down before anything else.
 
 2
-00:00:05,000 --> 00:00:08,000
-Most people say doubled.
+00:00:07,000 --> 00:00:11,000
+That's a difference of squares. Don't expand it the long way.
 
 3
-00:00:08,000 --> 00:00:12,000
-Count the squares.
+00:00:11,000 --> 00:00:14,000
+So x squared is twenty-five.
 
 4
-00:00:12,000 --> 00:00:16,000
-Four times. The ratio squares.
+00:00:14,000 --> 00:00:18,000
+x is five. And minus five — a square root gives you both.
 
 5
-00:00:16,000 --> 00:00:21,000
-And in three dimensions it cubes.
+00:00:18,000 --> 00:00:23,000
+But minus five makes a side of minus three metres. A rectangle can't have that.
 
 6
-00:00:21,000 --> 00:00:28,000
-Here's the trap. Sides scale by k. Areas by k squared. Volumes by k cubed. One ratio, three different jobs.
+00:00:23,000 --> 00:00:27,000
+So x is five.
+
+7
+00:00:27,000 --> 00:00:34,000
+Here's the trap — x is not the answer. They asked for the dimensions, not for x.

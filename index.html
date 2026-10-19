@@ -1438,6 +1438,24 @@
   }, { threshold: 0.1 });
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
+  // Every inquiry also lands in the Sales CRM on the portal (alongside the
+  // Web3Forms email), so it gets a follow-up schedule and an AI brief.
+  // sendBeacon survives the form's own page navigation.
+  const PORTAL = 'https://portal.toptutorsmtl.com';
+  document.querySelectorAll('.contact-form').forEach(form => {
+    form.addEventListener('submit', () => {
+      const f = new FormData(form);
+      const lead = new FormData();
+      lead.append('name', [f.get('first_name'), f.get('last_name')].filter(Boolean).join(' '));
+      lead.append('email', f.get('email') || '');
+      lead.append('level', f.get('level') || '');
+      lead.append('subjects', f.get('subject_interest') || '');
+      lead.append('message', f.get('message') || '');
+      lead.append('source', 'website');
+      try { navigator.sendBeacon(PORTAL + '/api/public/leads', lead); } catch (err) {}
+    });
+  });
+
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const target = document.querySelector(a.getAttribute('href'));
@@ -1445,5 +1463,7 @@
     });
   });
 </script>
+<!-- AI appointment setter: answers questions and books free consultations. -->
+<script src="https://portal.toptutorsmtl.com/setter.js" defer data-title="Top Tutors MTL" data-color="#1B2A4A" data-accent="#C8941A"></script>
 </body>
 </html>

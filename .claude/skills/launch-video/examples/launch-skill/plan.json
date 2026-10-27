@@ -1,0 +1,177 @@
+{
+ "name": "launch-skill",
+ "format": "16:9",
+ "brand": {
+  "name": "launch-video"
+ },
+ "theme": {
+  "accent": "#0DDD4B"
+ },
+ "music": {
+  "synth": true,
+  "bpm": 112
+ },
+ "scenes": [
+  {
+   "type": "text",
+   "bg": "dark",
+   "vo": "What if one [skill] could make videos like this?"
+  },
+  {
+   "type": "text",
+   "bg": "dark",
+   "mode": "type",
+   "vo": "Not an editor. Not a motion designer."
+  },
+  {
+   "type": "hero",
+   "vo": "Meet"
+  },
+  {
+   "type": "logo",
+   "vo": "launch video. A Claude Code skill.",
+   "tagline": "A Claude Code skill."
+  },
+  {
+   "type": "terminal",
+   "bg": "dots",
+   "vo": "Tell Claude what you *built.*",
+   "text": "Tell Claude what you *built.*",
+   "dur": 2.4,
+   "lines": [
+    {
+     "cmd": "/launch-video"
+    },
+    {
+     "out": "What are we launching? Screenshots, a logo, a link.",
+     "dim": true
+    },
+    {
+     "cmd": "my app. screenshots are in ./shots"
+    },
+    {
+     "out": "\u2713 script  \u00b7  12 lines",
+     "accent": true
+    }
+   ]
+  },
+  {
+   "type": "text",
+   "bg": "light",
+   "vo": "It writes the [script,]"
+  },
+  {
+   "type": "chips",
+   "bg": "light",
+   "join": true,
+   "vo": "then voices it, animates it, and renders it.",
+   "items": [
+    "Script",
+    "\u2192",
+    "Voice",
+    "\u2192",
+    "Scenes",
+    "\u2192",
+    "Render"
+   ]
+  },
+  {
+   "type": "terminal",
+   "bg": "glow",
+   "vo": "Record it in [your own voice.]",
+   "text": "Record it in [your own voice.]",
+   "dur": 2.2,
+   "lines": [
+    {
+     "cmd": "python3 vo.py record launches/my-app"
+    },
+    {
+     "out": "line 3 of 12",
+     "dim": true
+    },
+    {
+     "out": "    Record it in your own voice."
+    },
+    {
+     "out": "\u25cf recording   Enter = stop",
+     "accent": true
+    }
+   ]
+  },
+  {
+   "type": "text",
+   "bg": "dark",
+   "vo": "Or pick one from *Fish Audio* or *ElevenLabs.*"
+  },
+  {
+   "type": "text",
+   "bg": "light",
+   "mode": "type",
+   "vo": "Every word lands on the voice."
+  },
+  {
+   "type": "cards",
+   "bg": "dark",
+   "vo": "Every scene is animated in code.",
+   "text": "Every scene, *animated in code.*",
+   "dur": 2.3,
+   "items": [
+    {
+     "src": "assets/frame-meet-tight.jpg"
+    },
+    {
+     "src": "assets/frame-chips-tight.jpg"
+    },
+    {
+     "src": "assets/frame-lockup-tight.jpg"
+    }
+   ],
+   "layout": "fan"
+  },
+  {
+   "type": "ui",
+   "bg": "light",
+   "vo": "This whole video?",
+   "text": "This *whole* video?",
+   "side": "top",
+   "src": "assets/board.jpg",
+   "dur": 1.9,
+   "cam": "pan",
+   "width": 0.8
+  },
+  {
+   "type": "terminal",
+   "bg": "dots",
+   "vo": "Made with it. Rendered in one command.",
+   "text": "Made with it. [One command.]",
+   "dur": 2.6,
+   "lines": [
+    {
+     "cmd": "node render.mjs launches/launch-skill"
+    },
+    {
+     "out": "launch-skill: 1920x1080, 33.4 s, 14 scenes \u00b7 1,002 frames",
+     "dim": true
+    },
+    {
+     "out": "\u2713 voice \u00b7 music \u00b7 sfx mixed",
+     "accent": true
+    },
+    {
+     "out": "video  out/launch-skill.mp4"
+    }
+   ]
+  },
+  {
+   "type": "text",
+   "bg": "dark",
+   "vo": "Comment skill and it's yours.",
+   "text": "Comment [SKILL] and it's yours.",
+   "sub": "a Claude Code skill \u00b7 keeran.ai"
+  }
+ ],
+ "vo": {
+  "post": 0.16,
+  "hold": 0.9
+ }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "launch-video-engine",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic HTML motion-graphics engine for launch videos, rendered frame by frame in headless Chrome.",
+  "dependencies": {
+    "@fontsource/instrument-serif": "5.1.0",
+    "@fontsource/inter": "5.1.0",
+    "@fontsource/inter-tight": "5.1.0",
+    "@fontsource/jetbrains-mono": "5.1.0",
+    "playwright-core": "1.48.2"
+  }
+}

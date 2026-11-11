@@ -4,6 +4,7 @@
 **Date:** 2026-11-11
 **Owner:** me
 **Working names:** **Coach** (fitness) and **Buddy** (accountability). Rename them whenever you like.
+**Decided:** iPhone. Coach's data comes in through an **Apple Health sync** (MacroFactor → Apple Health → bot), with app screenshots as the manual fallback.
 
 ---
 
@@ -44,11 +45,11 @@ There is one user, me, on Telegram on my phone.
 
 **Coach**
 - "How am I doing this week?" → weekly averages, weight trend versus goal, protein adherence, and one or two concrete suggestions.
+- I log food and weigh in through MacroFactor as usual. Without me doing anything, the numbers flow into Apple Health and from there to Coach. **Coach always already knows my data.**
 - Sunday evening → Coach sends a short weekly check-in without being asked.
-- I send a screenshot of MacroFactor (dashboard, weight trend, or weekly check-in) → Coach reads the numbers, stores them, and replies with feedback.
-- I send the MacroFactor `.xlsx` export → Coach imports all the history at once.
+- I send a screenshot of a MacroFactor screen (dashboard, weight trend, weekly check-in, macro targets) → Coach reads it. This is useful for things Apple Health doesn't carry, like trend weight, expenditure, or the targets MacroFactor recommends.
+- I send the MacroFactor `.xlsx` export once → Coach backfills all my history.
 - "Is 3 days of high carbs going to mess up my cut?" → a domain answer that uses my actual data.
-- *(Optional)* I send a meal photo → Coach gives a rough macro estimate as a sanity check. Logging still happens in MacroFactor.
 
 **Buddy**
 - Morning: "What are the 1–3 things that matter today?" I answer in a sentence.
@@ -66,18 +67,53 @@ There is one user, me, on Telegram on my phone.
 - **The unofficial clients are now broken.** Several projects talked directly to MacroFactor's Firebase/Firestore backend: `sjawhar/macrofactor` (CLI and MCP), `zsrobinson/macrofactor`, and the Rust crate `macro-factor-api`. In **May 2026**, Stronger By Science turned on **Firebase App Check enforcement**. Every third-party login now fails with `401 Firebase App Check token is invalid`, and `sjawhar/macrofactor` is archived for that reason.
 - **Building our own CLI against the backend would hit the same wall.** Getting around it would mean faking the official app's attestation. That is fragile, likely against their ToS, and could break any day. **Rejected.**
 
-### Chosen approach (in phases)
+### Chosen approach: Apple Health sync (primary) + screenshots (fallback)
 
-| Phase | Method | Daily effort | Build effort | Notes |
-|---|---|---|---|---|
-| **v1** | **Screenshot ingestion.** I send screenshots of MacroFactor screens and Claude vision extracts the numbers. | ~15 s, only when I feel like it | Low | Works on day one with no dependencies. Coach can *ask* for a screenshot when data is stale. |
-| **v1** | **`.xlsx` export ingestion.** I send the export file to Coach and it parses and upserts by date. | ~30 s, weekly | Low | Covers historical backfill and corrects any OCR mistakes. Exact column names get pinned from a real export file. |
-| **v1.1** | **Apple Health push (if iPhone).** MacroFactor syncs to Apple Health, and a daily iOS Shortcut automation (or the *Health Auto Export* app's REST automation) POSTs the day's weight, calories, macros, and steps to `POST /ingest/health` on the bot server. | **Zero** | Medium | Fully automatic. The endpoint is protected by a shared secret header. |
-| ~~—~~ | ~~Direct Firestore~~ | — | — | Rejected (App Check). |
+```
+MacroFactor ──(built-in sync)──► Apple Health ──(iPhone exporter)──► POST /ingest/health ──► Coach DB
+```
 
-If I'm on **Android**, v1.1 becomes a Health Connect export path, which needs research. Screenshots and xlsx still work in the meantime.
+Apple Health is the official, supported doorway out of MacroFactor. The bot server can't read Apple Health directly, because HealthKit only exists on the phone. So something on the iPhone has to read Health and push the data to the server.
 
-**Data precedence:** Health push > xlsx > screenshot. A row from a more reliable source overwrites a less reliable one for the same date.
+**Pushing from the iPhone: two options**
+
+| | **A. Health Auto Export app (recommended)** | **B. Apple Shortcuts (free)** |
+|---|---|---|
+| What it is | iOS app *Health Auto Export – JSON+CSV*. It has a built-in "REST API" automation that POSTs selected Health metrics as JSON to a URL on a schedule, with custom headers for auth. | A personal automation in the Shortcuts app: *Find Health Samples* for each metric → build a JSON dict → *Get Contents of URL* (POST). |
+| Cost | Automations need the paid tier | Free |
+| Build effort | Low. Tick the metrics, paste the URL and header. | Medium. One Find/Sum block per metric, which is fiddly to build and maintain. |
+| Backfill / retries | Built in (can resend a date range) | Manual |
+| Payload | Its standard JSON (`data.metrics[]` → `{name, units, data[{date, qty}]}`). **Verify against a real test export** before writing the parser. | Whatever we define |
+
+Go with **A**. Keep **B** as a backup if I don't want to pay.
+
+**Metrics to sync** (only if MacroFactor writes them to Health; confirm on the permissions screen):
+- Body Mass (weight). MacroFactor exports weight to Health.
+- Dietary Energy, Protein, Carbohydrates, Total Fat (plus Fiber, if available).
+- Steps. These usually come from the iPhone or Watch itself, not MacroFactor.
+- *(Optional)* Active Energy, Workouts.
+
+**Sync schedule:** every 1–2 hours plus whenever the app opens, resending **the last 2 days** each time. The server upserts by date, so resends are harmless, and late edits to yesterday's log still get picked up.
+
+**iOS gotcha: Health data is locked while the phone is locked.** Background exports can't read Health while the iPhone is locked, so a sync at 3am may silently skip. To handle this:
+- Use frequent syncs plus a resend window, so the next unlocked run catches up.
+- For Shortcuts (option B), trigger on **"When MacroFactor is closed"**. The phone is unlocked at that moment, and I just changed data.
+- Coach shows a "last synced" time on `/today`. If there has been no sync for 36h+, Coach sends **one** message: "Health sync looks stuck. Open Health Auto Export, or send me a screenshot."
+
+**What Apple Health does *not* carry:** MacroFactor's **trend weight**, **expenditure (TDEE)** estimate, and **recommended macro targets**. Those live only in the app. Coach handles this two ways:
+- Coach computes its own trend weight (an exponentially smoothed moving average, like MacroFactor's) and its own rough expenditure estimate from intake and weight change.
+- Coach **asks for one screenshot of the weekly check-in screen** with the Sunday check-in, so it has MacroFactor's official expenditure and targets.
+
+### All ingestion paths
+
+| Path | Role | Daily effort |
+|---|---|---|
+| **Apple Health → webhook** | **Primary.** Daily weight, calories, macros, steps. | **Zero** |
+| **Screenshots** | Fallback when the sync is stuck. Also the source of MacroFactor-only numbers (trend weight, expenditure, targets). | ~15 s, weekly |
+| **`.xlsx` export** | One-time history backfill at setup, and for repairs. | Once |
+| ~~Direct Firestore~~ | Rejected (App Check). | — |
+
+**Data precedence (same date):** Health > xlsx > screenshot for raw logged values. Screenshots are the only source for MacroFactor's own computed values.
 
 ---
 
@@ -87,14 +123,16 @@ If I'm on **Android**, v1.1 becomes a Health Connect export path, which needs re
 
 | ID | Requirement |
 |---|---|
-| C1 | Accept photos/screenshots. Classify them (MacroFactor dashboard, weight trend, food log, weekly check-in, meal photo, other), extract structured data, **show what was extracted**, and save it. |
-| C2 | Accept `.xlsx`/`.csv` documents and import nutrition, weight, and workouts by date (idempotent upsert). |
-| C3 | `POST /ingest/health` webhook for the automated push (v1.1). |
+| C1 | **`POST /ingest/health`** receives the Apple Health payload. It authenticates with a secret header (`X-Ingest-Key`), parses each metric, aggregates per day (sums intake and steps, takes the latest weight), and upserts into `daily_metrics`. It logs the raw payload to `health_raw` for debugging, and records `last_synced_at`. |
+| C2 | Accept MacroFactor **screenshots**. Classify them (dashboard, weight trend, weekly check-in, macro targets, food log, other), extract structured data, **reply with what was extracted** so I can correct it, and save it. |
+| C3 | Accept `.xlsx`/`.csv` exports and import history by date (idempotent upsert). |
 | C4 | Answer questions using the last N days of data plus goals. Always pull from the DB with tools, never from memory. |
-| C5 | Weekly check-in (default Sunday 7pm). Covers 7-day average calories and protein versus targets, the trend-weight change, rate versus goal, and **one** actionable suggestion. |
-| C6 | Stale-data nudge: if there's no data for 3+ days, send **one** soft message asking for a screenshot or export. Never more than one per stale period. |
-| C7 | Store goals: phase (cut, maintain, bulk), target rate, calorie and macro targets, target weight. Editable by chat ("I'm switching to maintenance"). |
-| C8 | Meal-photo macro estimate (optional, v1.1). Clearly labeled as an estimate. |
+| C5 | Weekly check-in (default Sunday 7pm). Covers 7-day average calories and protein versus targets, the trend-weight change, rate versus goal, and **one** actionable suggestion. Ends by asking for a weekly check-in screenshot (optional). |
+| C6 | Sync-health watchdog: no sync for 36h+ → **one** soft message per stale period. |
+| C7 | Store goals: phase (cut, maintain, bulk), target rate, calorie and macro targets, target weight. Editable by chat ("I'm switching to maintenance") or from a targets screenshot. |
+| C8 | Coach computes its own trend weight and a rough expenditure estimate from the synced data, so it doesn't depend on screenshots. |
+
+*Out of scope:* meal-photo macro estimates. Logging stays in MacroFactor.
 
 **Commands:** `/today` · `/week` · `/goals` · `/sync` (how to send data) · `/quiet` · `/help`
 
@@ -142,8 +180,12 @@ messages(id, bot, role, content, created_at)
 conversation_summary(bot, summary, updated_at)
 
 -- coach
-daily_metrics(date PK, weight_kg, trend_weight_kg, calories, protein_g, carbs_g, fat_g,
-              steps, source /* health|xlsx|screenshot */, updated_at)
+daily_metrics(date PK, weight_kg, calories, protein_g, carbs_g, fat_g, fiber_g,
+              steps, active_kcal, source /* health|xlsx|screenshot */, updated_at)
+mf_snapshots(id, date, trend_weight_kg, expenditure_kcal, target_calories, target_protein_g,
+             target_carbs_g, target_fat_g, source /* screenshot|xlsx */, created_at)  -- MacroFactor-only values
+health_raw(id, received_at, payload_json)  -- keep ~30 days for debugging the parser
+sync_state(source PK, last_synced_at)
 workouts(id, date, name, details_json, source)
 coach_goals(id, phase, target_rate_pct_per_week, calories, protein_g, carbs_g, fat_g,
             target_weight_kg, effective_from)
@@ -167,6 +209,15 @@ For each bot:
 5. `/setdescription` and `/setuserpic` (optional, but it makes the two bots easy to tell apart).
 6. Send the bot a message, then read your user ID from the logs and set `ALLOWED_USER_ID`.
 
+### 8b. Setup: Apple Health sync (iPhone)
+
+1. **MacroFactor:** turn on Apple Health in the app's integrations / data sources settings, with **export** enabled for nutrition and weight. Then in iOS **Settings → Health → Data Access & Devices → MacroFactor**, check that it is allowed to *write* Dietary Energy, Protein, Carbs, Fat, and Body Mass.
+2. Log one meal and one weigh-in, then confirm they appear in the **Health** app (Browse → Nutrition / Body Measurements).
+3. Install **Health Auto Export – JSON+CSV** and give it read access to those metrics plus Steps.
+4. Create an automation there: type **REST API**, URL `https://<bot-server>/ingest/health`, format JSON, header `X-Ingest-Key: <secret>`, the metrics above, aggregated **daily**, time range "since last sync" or the last 2 days, and the most frequent schedule available.
+5. Run it manually once. Coach should reply in Telegram with "✅ Synced: 82.4 kg, 2,150 kcal, 165 g protein…". Use the `health_raw` table to adjust the parser to the real field names.
+6. Send Coach the MacroFactor `.xlsx` export once to backfill history.
+
 ---
 
 ## 9. Retiring Simon
@@ -184,8 +235,8 @@ For each bot:
 |---|---|---|
 | M0 | Scaffold | Both bots created in BotFather. The repo, DB schema, and deploy pipeline exist, and both bots answer "hi" only to me. |
 | M1 | **Buddy v1** | Topic registry, drop/snooze/done, morning and evening check-ins, nudge budget, and back-off all work. The drop guarantee has a test. |
-| M2 | **Coach v1** | Screenshot and xlsx ingestion, `/today`, `/week`, goals, and the weekly check-in work. |
-| M3 | Coach v1.1 | Apple Health → webhook automation runs daily with zero touch. Meal-photo estimates are added. |
+| M2 | **Coach v1** | Apple Health → `/ingest/health` sync runs with zero touch (§8b). `/today`, `/week`, goals, and the weekly check-in work. The sync watchdog is in place. |
+| M3 | Coach v1.1 | Screenshot ingestion (MacroFactor-only values), xlsx backfill, own trend weight and expenditure estimate. |
 | M4 | Simon retired | §9 complete. |
 
 **Suggested scope for the first build session:** M0 + M1, then start M2. Buddy has no external dependencies, so it ships fastest.
@@ -204,12 +255,13 @@ For each bot:
 ## 12. Open questions (answer before or at the start of the build)
 
 1. **Where does Simon live now** (stack, host, DB)? Reuse his infrastructure or start fresh?
-2. **iPhone or Android?** This decides the v1.1 automation path (Apple Health Shortcut vs. Health Connect).
-3. **Should Coach and Buddy share anything?** The default is fully separate. One option is for Buddy to get a read-only line like "gym 3/4 this week" from Coach.
-4. **Workouts:** are they logged in MacroFactor Workouts or somewhere else?
-5. **"Photos" for Coach:** screenshots of the app (assumed), meal photos, and/or progress photos? Progress photos are private body images; if wanted, store them encrypted or not at all.
-6. Final **names and avatars** for the two bots.
-7. Confirm the **timezone** (assumed America/Toronto) and the check-in times.
+2. **Should Coach and Buddy share anything?** The default is fully separate. One option is for Buddy to get a read-only line like "gym 3/4 this week" from Coach.
+3. **Workouts:** are they logged in MacroFactor Workouts or somewhere else? If MacroFactor Workouts writes them to Apple Health, add the Workouts type to the sync.
+4. Health Auto Export paid tier (option A) or the free Shortcuts build (option B)?
+5. Final **names and avatars** for the two bots.
+6. Confirm the **timezone** (assumed America/Toronto) and the check-in times.
+
+*Resolved:* iPhone → Apple Health sync is the primary path. "Photos" means MacroFactor app screenshots only.
 
 ---
 
@@ -220,3 +272,6 @@ For each bot:
 - Nutrition export to Apple Health / Google Fit: https://macrofactor.com/mm-march-2022/
 - Unofficial client, archived after App Check (May 2026): https://github.com/sjawhar/macrofactor
 - Other unofficial clients: https://github.com/zsrobinson/macrofactor · https://crates.io/crates/macro-factor-api
+- Health Auto Export (App Store): https://apps.apple.com/app/id1115567069
+- Health Auto Export REST API / JSON format wiki: https://github.com/Lybron/health-auto-export/wiki
+- Example receiver for Health Auto Export payloads: https://github.com/irvinlim/apple-health-ingester

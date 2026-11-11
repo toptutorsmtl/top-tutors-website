@@ -1,6 +1,6 @@
 # PRD: Replace Simon with two specialized Telegram bots
 
-**Status:** Draft, ready to build
+**Status:** In build. Code is in `bots/`
 **Date:** 2026-11-11
 **Owner:** me
 **Working names:** **Coach** (fitness) and **Buddy** (accountability). Rename them whenever you like.
@@ -85,7 +85,7 @@ Apple Health is the official, supported doorway out of MacroFactor. The bot serv
 | Backfill / retries | Built in (can resend a date range) | Manual |
 | Payload | Its standard JSON (`data.metrics[]` → `{name, units, data[{date, qty}]}`). **Verify against a real test export** before writing the parser. | Whatever we define |
 
-Go with **A**. Keep **B** as a backup if I don't want to pay.
+**Decided: B (Apple Shortcuts).** The payload is a flat JSON object we define: `date, calories, protein_g, carbs_g, fat_g, fiber_g, steps, weight, weight_unit, weight_date`, all sent as text and parsed leniently on the server. Step-by-step guide: `bots/docs/apple-health-shortcut.md`.
 
 **Metrics to sync** (only if MacroFactor writes them to Health; confirm on the permissions screen):
 - Body Mass (weight). MacroFactor exports weight to Health.
@@ -168,7 +168,7 @@ Telegram ──► Bot server (one service, two bot instances)
 
 - **One repo, one deployed service, two bots.** A shared core (LLM client, DB, scheduler, auth) holds the plumbing, and each bot has its own folder with its persona, tools, and commands. Each bot has its own `TELEGRAM_TOKEN_*`.
 - **Stack (default; change it if Simon's stack is worth reusing):** TypeScript + **grammY**, or Python + **aiogram**. Postgres via **Supabase**, hosted on **Railway** (always-on, cron-friendly). Use webhooks in prod and long polling locally.
-- **LLM:** Claude API. Coach uses Sonnet 5.5 (`claude-sonnet-5-5`), which is needed for screenshot vision and data reasoning. Buddy can run on Haiku 5.5 (`claude-haiku-5-5`) for cheap, fast chat, with an upgrade to Sonnet if the tone suffers. Both use tool use. All DB reads and writes go through tools.
+- **LLM:** Claude API through the SDK tool runner, with server-side refusal fallbacks. Both bots default to Opus 5.5 (`claude-opus-5-5`) and can be switched per bot with `COACH_MODEL` / `BUDDY_MODEL` (e.g. Haiku 5.5 for Buddy to cut cost). All DB reads and writes go through tools.
 - **Memory = structured state, not chat logs.** Store the last ~20 messages plus a rolling summary for conversation context. Durable facts (goals, topics, metrics) live in tables. This is what fixes the Simon problem.
 - **Security:** each bot replies only to my Telegram user ID (`ALLOWED_USER_ID`) and ignores everyone else silently. Secrets live in env vars only.
 
@@ -257,11 +257,10 @@ For each bot:
 1. **Where does Simon live now** (stack, host, DB)? Reuse his infrastructure or start fresh?
 2. **Should Coach and Buddy share anything?** The default is fully separate. One option is for Buddy to get a read-only line like "gym 3/4 this week" from Coach.
 3. **Workouts:** are they logged in MacroFactor Workouts or somewhere else? If MacroFactor Workouts writes them to Apple Health, add the Workouts type to the sync.
-4. Health Auto Export paid tier (option A) or the free Shortcuts build (option B)?
-5. Final **names and avatars** for the two bots.
-6. Confirm the **timezone** (assumed America/Toronto) and the check-in times.
+4. Final **names and avatars** for the two bots.
+5. Confirm the **timezone** (assumed America/Toronto) and the check-in times.
 
-*Resolved:* iPhone → Apple Health sync is the primary path. "Photos" means MacroFactor app screenshots only.
+*Resolved:* iPhone → Apple Health sync is the primary path, built with Apple Shortcuts. "Photos" means MacroFactor app screenshots only.
 
 ---
 

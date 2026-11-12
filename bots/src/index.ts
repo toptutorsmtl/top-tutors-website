@@ -15,7 +15,7 @@ export function toCron(spec: string): string {
 
 async function main() {
   const cfg = loadConfig();
-  const db = createPool(cfg.databaseUrl);
+  const db = createPool(cfg.databaseUrl, cfg.dbSchema);
   await migrate(db);
 
   const coach = createCoach(cfg, db);

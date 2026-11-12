@@ -10,7 +10,7 @@ export interface Db {
   exec?(sql: string): Promise<unknown>;
 }
 
-export function createPool(databaseUrl: string): Db {
+export function createPool(databaseUrl: string, schema?: string): Db {
   // Supabase and most hosted Postgres require TLS; local URLs usually don't.
   const local = /localhost|127\.0\.0\.1/.test(databaseUrl);
   const pool = new pg.Pool({
@@ -18,6 +18,13 @@ export function createPool(databaseUrl: string): Db {
     ssl: local ? undefined : { rejectUnauthorized: false },
     max: 5,
   });
+  if (schema) {
+    if (!/^[a-z_][a-z0-9_]*$/.test(schema)) throw new Error(`Bad DB_SCHEMA "${schema}"`);
+    // Every pooled connection works inside the bots' own schema, never the app's `public`.
+    pool.on("connect", (client) => {
+      client.query(`SET search_path TO ${schema}`).catch((e) => console.error("[db] set search_path failed", e));
+    });
+  }
   // DATE columns come back as plain YYYY-MM-DD strings instead of JS Dates shifted by the server TZ.
   pg.types.setTypeParser(1082, (v: string) => v);
   return pool as unknown as Db;

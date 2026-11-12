@@ -22,6 +22,7 @@ export interface Config {
   coachModel: string;
   buddyModel: string;
   databaseUrl: string;
+  dbSchema: string | undefined;
   ingestKey: string;
   port: number;
   tz: string;
@@ -42,6 +43,7 @@ export function loadConfig(): Config {
     coachModel: opt("COACH_MODEL", "claude-opus-5-5"),
     buddyModel: opt("BUDDY_MODEL", "claude-opus-5-5"),
     databaseUrl: req("DATABASE_URL"),
+    dbSchema: process.env.DB_SCHEMA || undefined,
     ingestKey: req("INGEST_KEY"),
     port: Number(opt("PORT", "3000")),
     tz: opt("TZ_NAME", "America/Toronto"),

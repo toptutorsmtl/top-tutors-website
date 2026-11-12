@@ -29,8 +29,12 @@ In Telegram, open **@BotFather** and run this twice:
 The service sets each bot's command menu itself on startup.
 
 ### 2. Database (Supabase)
-1. Create a new Supabase project.
-2. Go to **Connect → Session pooler** and copy the URI. That's your `DATABASE_URL`.
+The `coach_bots` schema and a `coach_bots_app` role already exist in **supabase-toptutors**. The role can only use that schema, never the Top Tutors tables. To finish:
+1. Supabase → **SQL Editor**, run once (pick your own password, letters and digits only):
+   ```sql
+   ALTER ROLE coach_bots_app WITH LOGIN PASSWORD 'pick-a-long-password';
+   ```
+2. Supabase → **Connect → Session pooler** → copy the URI. Change the user from `postgres.uenbatswdwcilpatlsta` to `coach_bots_app.uenbatswdwcilpatlsta`, and put your password in. That's `DATABASE_URL`. Also set `DB_SCHEMA=coach_bots`.
 
 Tables are created automatically on first boot.
 

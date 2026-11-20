@@ -19,3 +19,12 @@ describe("misc", () => {
     expect(inWindow(12 * 60, 22 * 60, 8 * 60)).toBe(false);
   });
 });
+
+import { poolerAlternates } from "../src/shared/db.js";
+describe("poolerAlternates", () => {
+  it("offers the other Supabase pooler cluster", () => {
+    const u = "postgres://coach_bots_app.ref:pw@aws-0-ca-central-1.pooler.supabase.com:5432/postgres";
+    expect(poolerAlternates(u)).toEqual([u, u.replace("aws-0-", "aws-1-")]);
+    expect(poolerAlternates("postgres://u:p@localhost:5432/db")).toHaveLength(1);
+  });
+});

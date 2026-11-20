@@ -1,6 +1,6 @@
 import { Cron } from "croner";
 import { loadConfig } from "./config.js";
-import { createPool, migrate } from "./shared/db.js";
+import { createPool, migrate, resolveDatabaseUrl } from "./shared/db.js";
 import { startHealthServer } from "./health/server.js";
 import { BUDDY_COMMANDS, createBuddy } from "./buddy/bot.js";
 import { COACH_COMMANDS, createCoach } from "./coach/bot.js";
@@ -15,7 +15,7 @@ export function toCron(spec: string): string {
 
 async function main() {
   const cfg = loadConfig();
-  const db = createPool(cfg.databaseUrl, cfg.dbSchema);
+  const db = createPool(await resolveDatabaseUrl(cfg.databaseUrl), cfg.dbSchema);
   await migrate(db);
 
   const coach = createCoach(cfg, db);
